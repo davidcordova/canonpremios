@@ -1,0 +1,245 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+ 
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+ 
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+ 
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+ 
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+ 
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+ 
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+ 
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+ 
+    --radius: 0.5rem;
+  }
+ 
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+ 
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+ 
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+ 
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+ 
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+ 
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+ 
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+ 
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+ 
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+  }
+}
+ 
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Roboto', sans-serif;
+  }
+}
+
+/* Estilos para modales */
+.dialog-content {
+  @apply fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2;
+  @apply bg-white rounded-lg shadow-lg;
+  @apply w-[calc(100%-2rem)] max-w-3xl mx-auto;
+  @apply max-h-[calc(100vh-4rem)] overflow-y-auto;
+  @apply p-6;
+  @apply z-[9999];
+}
+
+/* Contenedor del modal con scroll personalizado */
+.dialog-content {
+  scrollbar-width: thin;
+  scrollbar-color: #888 #f1f1f1;
+}
+
+.dialog-content::-webkit-scrollbar {
+  @apply w-2;
+}
+
+.dialog-content::-webkit-scrollbar-track {
+  @apply bg-gray-100 rounded-full;
+}
+
+.dialog-content::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded-full hover:bg-gray-400;
+}
+
+/* Overlay para modales */
+.dialog-overlay {
+  @apply fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998];
+}
+
+/* Tamaños responsivos para modales */
+@media (min-width: 640px) {
+  .dialog-content {
+    @apply w-full mx-6;
+  }
+
+  .dialog-content.sm {
+    @apply max-w-sm;
+  }
+
+  .dialog-content.md {
+    @apply max-w-md;
+  }
+
+  .dialog-content.lg {
+    @apply max-w-lg;
+  }
+
+  .dialog-content.xl {
+    @apply max-w-xl;
+  }
+
+  .dialog-content.full {
+    @apply max-w-[calc(100vw-4rem)];
+  }
+}
+
+/* Ajustes para dispositivos móviles */
+@media (max-width: 639px) {
+  .dialog-content {
+    @apply m-4 p-4;
+    @apply max-h-[calc(100vh-2rem)];
+  }
+}
+
+/* Ajustes para el menú lateral */
+.sidebar {
+  @apply transition-all duration-200 ease-in-out;
+}
+
+.sidebar-compact {
+  @apply w-16;
+}
+
+.sidebar-expanded {
+  @apply w-64;
+}
+
+@media (max-width: 1023px) {
+  .sidebar-mobile {
+    @apply fixed top-16 left-0 bottom-0 z-40;
+    @apply -translate-x-full;
+  }
+
+  .sidebar-mobile.open {
+    @apply translate-x-0;
+  }
+}
+
+/* Estilos para FullCalendar */
+.fc {
+  --fc-border-color: #E5E7EB;
+  --fc-button-text-color: #374151;
+  --fc-button-bg-color: #FFFFFF;
+  --fc-button-border-color: #D1D5DB;
+  --fc-button-hover-bg-color: #F3F4F6;
+  --fc-button-hover-border-color: #9CA3AF;
+  --fc-button-active-bg-color: #E5E7EB;
+  --fc-button-active-border-color: #6B7280;
+  --fc-event-bg-color: #D61F26;
+  --fc-event-border-color: #D61F26;
+  --fc-event-text-color: #FFFFFF;
+  --fc-today-bg-color: #FEF3C7;
+  @apply relative z-0;
+}
+
+.fc .fc-button {
+  @apply font-medium text-sm rounded-md shadow-sm;
+}
+
+.fc .fc-button-primary {
+  @apply bg-white border border-gray-300 text-gray-700 hover:bg-gray-50;
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active {
+  @apply bg-gray-100 border-gray-400 shadow-none;
+}
+
+.fc .fc-toolbar-title {
+  @apply text-xl font-semibold text-gray-900;
+}
+
+.fc .fc-col-header-cell {
+  @apply bg-gray-50 py-3;
+}
+
+.fc .fc-col-header-cell-cushion {
+  @apply font-medium text-gray-900;
+}
+
+.fc .fc-timegrid-slot-label {
+  @apply text-sm text-gray-500;
+}
+
+.fc .fc-event {
+  @apply rounded-md border shadow-sm cursor-pointer transition-opacity hover:opacity-90;
+}
+
+.fc .fc-event-time {
+  @apply font-medium;
+}
+
+.fc .fc-event-title {
+  @apply font-normal;
+}
+
+.fc .fc-timegrid-event-harness {
+  @apply mx-1;
+}
+
+.fc .fc-highlight {
+  @apply bg-blue-100 bg-opacity-50;
+}
+
+.fc .fc-day-today {
+  @apply bg-yellow-50 bg-opacity-50;
+}
+
+.fc-direction-ltr .fc-button-group > .fc-button {
+  @apply rounded-none first:rounded-l-md last:rounded-r-md;
+}
