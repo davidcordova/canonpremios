@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { DateRange } from 'react-day-picker';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { useAuthStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,6 +46,7 @@ export default function Stock() {
   const [newRecord, setNewRecord] = useState({
     products: [] as StockProduct[]
   });
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
 
   // Obtener la semana actual
   const currentDate = new Date();
@@ -284,16 +287,23 @@ export default function Stock() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Revisión de Stock</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Revisa los registros de stock enviados por los vendedores
-          </p>
+        <div className="flex items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Revisión de Stock</h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Revisa los registros de stock enviados por los vendedores
+            </p>
+          </div>
+          <DateRangePicker 
+            onDateChange={(range) => setDateRange(range)}
+            value={dateRange}
+          />
         </div>
         <ExportButtons
           data={stockRecords}
           recordsFilename="registros-stock"
           formatForExcel={formatStockForExcel}
+          dateRange={dateRange}
         />
       </div>
 

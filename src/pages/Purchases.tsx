@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { DateRange } from 'react-day-picker';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { useAuthStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,7 +28,7 @@ interface Purchase {
     name: string;
     email: string;
     avatar: string;
-    company: string;
+    store: string;
   };
   documentType: 'factura' | 'boleta';
   documentNumber: string;
@@ -60,6 +62,7 @@ export default function Purchases() {
   });
   const [selectedProduct, setSelectedProduct] = useState('');
   const [quantity, setQuantity] = useState('1');
+  const [currentStock, setCurrentStock] = useState('');
   const [error, setError] = useState('');
 
   const handleNewPurchase = () => {
@@ -86,7 +89,7 @@ export default function Purchases() {
         name: user?.name || '',
         email: user?.email || '',
         avatar: user?.avatar || '',
-        company: user?.company || ''
+        store: user?.store || ''
       },
       documentType: newPurchase.documentType,
       documentNumber: newPurchase.documentNumber,
@@ -113,24 +116,23 @@ export default function Purchases() {
 
   const handleAddProduct = () => {
     const product = mockProducts.find(p => p.id === selectedProduct);
-    if (!product || !currentStock) return;
+    if (!product) return;
 
-    const stockValue = parseInt(currentStock);
-    const difference = stockValue - product.stock;
+    const qty = parseInt(quantity) || 1;
+    const points = product.points * qty;
 
     setNewPurchase(prev => ({
       ...prev,
       products: [...prev.products, {
         productId: product.id,
         model: product.model,
-        previousStock: product.stock,
-        currentStock: stockValue,
-        difference
+        quantity: qty,
+        points: points
       }]
     }));
 
     setSelectedProduct('');
-    setCurrentStock('');
+    setQuantity('1');
   };
 
   const handleRemoveProduct = (index: number) => {
@@ -492,19 +494,28 @@ export default function Purchases() {
     );
   }
 
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gestión de Compras</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Administra las compras registradas por los vendedores
-          </p>
+        <div className="flex items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Gestión de Compras</h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Administra las compras registradas por los vendedores
+            </p>
+          </div>
+          <DateRangePicker 
+            onDateChange={(range) => setDateRange(range)}
+            value={dateRange}
+          />
         </div>
         <ExportButtons
           data={purchases}
           recordsFilename="compras"
           formatForExcel={formatPurchasesForExcel}
+          dateRange={dateRange}
         />
       </div>
 
@@ -559,7 +570,7 @@ export default function Purchases() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
-                      {purchase.seller.company}
+                      {purchase.seller.store}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">

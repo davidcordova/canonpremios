@@ -8,7 +8,8 @@ interface ExportButtonsProps {
   data: any[];
   chartTitle?: string;
   recordsFilename: string;
-  formatForExcel: (data: any[]) => any[];
+  formatForExcel: (data: any[], dateRange?: { from?: Date; to?: Date }) => any[];
+  dateRange?: { from?: Date; to?: Date };
 }
 
 export function ExportButtons({ 
@@ -16,7 +17,8 @@ export function ExportButtons({
   data, 
   chartTitle, 
   recordsFilename,
-  formatForExcel 
+  formatForExcel,
+  dateRange 
 }: ExportButtonsProps) {
   const handleExportPDF = async () => {
     if (chartRef?.current) {
@@ -25,7 +27,7 @@ export function ExportButtons({
   };
 
   const handleExportExcel = () => {
-    const formattedData = formatForExcel(data);
+    const formattedData = formatForExcel(data, dateRange);
     exportToExcel(formattedData, recordsFilename);
   };
 

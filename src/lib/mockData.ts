@@ -25,22 +25,22 @@ export const sellers = [
 
 // Datos de ejemplo para productos
 export const products = [
-  { id: '1', code: '0012', model: 'Cabeza', type: 'Repuesto', points: 2 },
-  { id: '2', code: '0015', model: 'Cabezales Maxifi', type: 'Repuesto', points: 10 },
-  { id: '3', code: '0001', model: 'Impresora Canon G2160', type: 'Impresora', points: 2 },
-  { id: '4', code: '0002', model: 'Impresora Canon G3110', type: 'Impresora', points: 3 },
-  { id: '5', code: '0003', model: 'Impresora Canon G3160', type: 'Impresora', points: 0 },
-  { id: '6', code: '0004', model: 'Impresora Canon G4110', type: 'Impresora', points: 10 },
-  { id: '7', code: '0005', model: 'Impresora Canon G6010', type: 'Impresora', points: 8 },
-  { id: '8', code: '0011', model: 'Impresora Canon G610', type: 'Impresora', points: 14 },
-  { id: '9', code: '0006', model: 'Impresora Canon G7010', type: 'Impresora', points: 12 },
-  { id: '10', code: '0009', model: 'Impresora Canon Maxifi GX6010', type: 'Impresora', points: 18 },
-  { id: '11', code: '0010', model: 'Impresora Canon Maxifi GX7010', type: 'Impresora', points: 20 },
-  { id: '12', code: '0022', model: 'Impresora G2170', type: 'Impresora', points: 10 },
-  { id: '13', code: '0015', model: 'Impresora G3170', type: 'Impresora', points: 13 },
-  { id: '14', code: '0023', model: 'Impresora G4170', type: 'Impresora', points: 15 },
-  { id: '15', code: '0012', model: 'Kit de mantenimiento', type: 'Repuesto', points: 2 },
-  { id: '16', code: '0008', model: 'Tintas (por botella)', type: 'Consumible', points: 1 }
+  { id: '1', code: '0012', model: 'Cabeza', type: 'Repuesto', points: 2, stock: 10 },
+  { id: '2', code: '0015', model: 'Cabezales Maxifi', type: 'Repuesto', points: 10, stock: 10 },
+  { id: '3', code: '0001', model: 'Impresora Canon G2160', type: 'Impresora', points: 2, stock: 10 },
+  { id: '4', code: '0002', model: 'Impresora Canon G3110', type: 'Impresora', points: 3, stock: 10 },
+  { id: '5', code: '0003', model: 'Impresora Canon G3160', type: 'Impresora', points: 0, stock: 10 },
+  { id: '6', code: '0004', model: 'Impresora Canon G4110', type: 'Impresora', points: 10, stock: 10 },
+  { id: '7', code: '0005', model: 'Impresora Canon G6010', type: 'Impresora', points: 8, stock: 10 },
+  { id: '8', code: '0011', model: 'Impresora Canon G610', type: 'Impresora', points: 14, stock: 10 },
+  { id: '9', code: '0006', model: 'Impresora Canon G7010', type: 'Impresora', points: 12, stock: 10 },
+  { id: '10', code: '0009', model: 'Impresora Canon Maxifi GX6010', type: 'Impresora', points: 18, stock: 10 },
+  { id: '11', code: '0010', model: 'Impresora Canon Maxifi GX7010', type: 'Impresora', points: 20, stock: 10 },
+  { id: '12', code: '0022', model: 'Impresora G2170', type: 'Impresora', points: 10, stock: 10 },
+  { id: '13', code: '0015', model: 'Impresora G3170', type: 'Impresora', points: 13, stock: 10 },
+  { id: '14', code: '0023', model: 'Impresora G4170', type: 'Impresora', points: 15, stock: 10 },
+  { id: '15', code: '0012', model: 'Kit de mantenimiento', type: 'Repuesto', points: 2, stock: 10 },
+  { id: '16', code: '0008', model: 'Tintas (por botella)', type: 'Consumible', points: 1, stock: 10 }
 ];
 
 // Lista de mayoristas

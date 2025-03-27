@@ -30,13 +30,44 @@ export function exportToExcel<T>(data: T[], filename: string) {
   XLSX.writeFile(workbook, `${filename}.xlsx`);
 }
 
-export function formatSalesForExcel(sales: any[]) {
+export function formatSalesForExcel(sales: any[], dateRange?: { from?: Date; to?: Date }) {
+  // Filtrar registros por rango de fechas si está definido
+  const filteredSales = dateRange?.from || dateRange?.to 
+    ? sales.filter(sale => {
+        const saleDate = new Date(sale.date);
+        // Normalizar fechas (ignorar horas/minutos/segundos)
+        const normalizedSaleDate = new Date(
+          saleDate.getFullYear(),
+          saleDate.getMonth(),
+          saleDate.getDate()
+        );
+        const normalizedFrom = dateRange.from 
+          ? new Date(
+              dateRange.from.getFullYear(),
+              dateRange.from.getMonth(),
+              dateRange.from.getDate()
+            )
+          : null;
+        const normalizedTo = dateRange.to
+          ? new Date(
+              dateRange.to.getFullYear(),
+              dateRange.to.getMonth(),
+              dateRange.to.getDate()
+            )
+          : null;
+        
+        const fromValid = !normalizedFrom || normalizedSaleDate >= normalizedFrom;
+        const toValid = !normalizedTo || normalizedSaleDate <= normalizedTo;
+        return fromValid && toValid;
+      })
+    : sales;
+
   // Obtener lista única de empresas
-  const companies = Array.from(new Set(sales.map(sale => sale.seller?.company))).filter(Boolean);
+  const companies = Array.from(new Set(filteredSales.map(sale => sale.seller?.company))).filter(Boolean);
   
   // Obtener lista única de productos
-  const products = Array.from(new Set(sales.flatMap(sale => 
-    sale.products.map(p => p.model)
+  const products = Array.from(new Set(filteredSales.flatMap(sale => 
+    sale.products.map((p: {model: string}) => p.model)
   ))).sort();
 
   // Crear matriz de datos
@@ -55,9 +86,9 @@ export function formatSalesForExcel(sales: any[]) {
     });
 
     // Sumar cantidades de productos para esta empresa
-    sales.forEach(sale => {
+    filteredSales.forEach(sale => {
       if (sale.seller?.company === company) {
-        sale.products.forEach(product => {
+        sale.products.forEach((product: {model: string, quantity: number}) => {
           row[product.model] = (row[product.model] || 0) + product.quantity;
         });
       }
@@ -69,8 +100,39 @@ export function formatSalesForExcel(sales: any[]) {
   return data;
 }
 
-export function formatPurchasesForExcel(purchases: any[]) {
-  return purchases.map(purchase => {
+export function formatPurchasesForExcel(purchases: any[], dateRange?: { from?: Date; to?: Date }) {
+  // Filtrar registros por rango de fechas si está definido
+  const filteredPurchases = dateRange?.from || dateRange?.to 
+    ? purchases.filter(purchase => {
+        const purchaseDate = new Date(purchase.date);
+        // Normalizar fechas (ignorar horas/minutos/segundos)
+        const normalizedPurchaseDate = new Date(
+          purchaseDate.getFullYear(),
+          purchaseDate.getMonth(),
+          purchaseDate.getDate()
+        );
+        const normalizedFrom = dateRange.from 
+          ? new Date(
+              dateRange.from.getFullYear(),
+              dateRange.from.getMonth(),
+              dateRange.from.getDate()
+            )
+          : null;
+        const normalizedTo = dateRange.to
+          ? new Date(
+              dateRange.to.getFullYear(),
+              dateRange.to.getMonth(),
+              dateRange.to.getDate()
+            )
+          : null;
+        
+        const fromValid = !normalizedFrom || normalizedPurchaseDate >= normalizedFrom;
+        const toValid = !normalizedTo || normalizedPurchaseDate <= normalizedTo;
+        return fromValid && toValid;
+      })
+    : purchases;
+
+  return filteredPurchases.map(purchase => {
     const date = new Date(purchase.date);
     const weekNumber = getWeek(date);
     const monthName = format(date, 'MMMM', { locale: es });
@@ -103,8 +165,39 @@ export function formatProductsForExcel(products: any[]) {
   }));
 }
 
-export function formatWinnersForExcel(winners: any[]) {
-  return winners.map(winner => {
+export function formatWinnersForExcel(winners: any[], dateRange?: { from?: Date; to?: Date }) {
+  // Filtrar registros por rango de fechas si está definido
+  const filteredWinners = dateRange?.from || dateRange?.to 
+    ? winners.filter(winner => {
+        const winnerDate = new Date(winner.reward.date);
+        // Normalizar fechas (ignorar horas/minutos/segundos)
+        const normalizedWinnerDate = new Date(
+          winnerDate.getFullYear(),
+          winnerDate.getMonth(),
+          winnerDate.getDate()
+        );
+        const normalizedFrom = dateRange.from 
+          ? new Date(
+              dateRange.from.getFullYear(),
+              dateRange.from.getMonth(),
+              dateRange.from.getDate()
+            )
+          : null;
+        const normalizedTo = dateRange.to
+          ? new Date(
+              dateRange.to.getFullYear(),
+              dateRange.to.getMonth(),
+              dateRange.to.getDate()
+            )
+          : null;
+        
+        const fromValid = !normalizedFrom || normalizedWinnerDate >= normalizedFrom;
+        const toValid = !normalizedTo || normalizedWinnerDate <= normalizedTo;
+        return fromValid && toValid;
+      })
+    : winners;
+
+  return filteredWinners.map(winner => {
     const date = new Date(winner.reward.date);
     const weekNumber = getWeek(date);
     const monthName = format(date, 'MMMM', { locale: es });
@@ -124,49 +217,114 @@ export function formatWinnersForExcel(winners: any[]) {
   });
 }
 
-export function formatStockForExcel(records: any[]) {
-  // Obtener lista única de empresas
-  const companies = Array.from(new Set(records.map(record => record.seller?.company))).filter(Boolean);
-  
+export function formatStockForExcel(records: any[], dateRange?: { from?: Date; to?: Date }) {
+  // Filtrar registros por rango de fechas si está definido
+  const filteredRecords = dateRange?.from || dateRange?.to 
+    ? records.filter(record => {
+        const recordDate = new Date(record.date);
+        // Normalizar fechas (ignorar horas/minutos/segundos)
+        const normalizedRecordDate = new Date(
+          recordDate.getFullYear(),
+          recordDate.getMonth(),
+          recordDate.getDate()
+        );
+        const normalizedFrom = dateRange.from 
+          ? new Date(
+              dateRange.from.getFullYear(),
+              dateRange.from.getMonth(),
+              dateRange.from.getDate()
+            )
+          : null;
+        const normalizedTo = dateRange.to
+          ? new Date(
+              dateRange.to.getFullYear(),
+              dateRange.to.getMonth(),
+              dateRange.to.getDate()
+            )
+          : null;
+        
+        const fromValid = !normalizedFrom || normalizedRecordDate >= normalizedFrom;
+        const toValid = !normalizedTo || normalizedRecordDate <= normalizedTo;
+        return fromValid && toValid;
+      })
+    : records;
+
   // Obtener lista única de productos
-  const products = Array.from(new Set(records.flatMap(record => 
-    record.products.map(p => p.model)
+  const products = Array.from(new Set(filteredRecords.flatMap(record => 
+    record.products.map((p: {model: string}) => p.model)
   ))).sort();
 
-  // Crear matriz de datos
-  const data = companies.map(company => {
-    // Inicializar objeto con empresa
+  // Crear matriz de datos con todos los registros filtrados
+  const data = filteredRecords.map(record => {
+    const date = new Date(record.date);
+    const weekNumber = getWeek(date);
+    const monthName = format(date, 'MMMM', { locale: es });
+    
+    // Inicializar objeto con datos básicos
     const row: any = {
-      'EMPRESA': company,
-      'VENDEDOR': records.find(r => r.seller?.company === company)?.seller?.name || '',
-      'FECHA': records.find(r => r.seller?.company === company)?.date || '',
-      'HORA': records.find(r => r.seller?.company === company)?.time || ''
+      'Fecha': new Date(record.date).toLocaleDateString('es-ES'),
+      'Hora': record.time,
+      'Semana': `Semana ${weekNumber}`,
+      'Mes': monthName.charAt(0).toUpperCase() + monthName.slice(1),
+      'Año': date.getFullYear(),
+      'Vendedor': record.seller?.name || '',
+      'Empresa': record.seller?.company || ''
     };
 
-    // Agregar columnas para cada producto, inicializadas en 0
-    products.forEach(product => {
-      row[product] = 0;
+    // Agregar columnas para cada producto con el stock actual
+    products.forEach((product: string) => {
+      const productData = record.products.find((p: {model: string}) => p.model === product);
+      if (productData) {
+        row[product] = productData.currentStock;
+        row[`${product} (Diferencia)`] = productData.difference;
+      } else {
+        row[product] = 0;
+        row[`${product} (Diferencia)`] = 0;
+      }
     });
-
-    // Obtener el registro más reciente para esta empresa
-    const latestRecord = records
-      .filter(r => r.seller?.company === company)
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
-
-    if (latestRecord) {
-      latestRecord.products.forEach(product => {
-        row[product.model] = product.currentStock;
-      });
-    }
 
     return row;
   });
 
+  // Ordenar por fecha descendente
+  data.sort((a, b) => new Date(b.Fecha).getTime() - new Date(a.Fecha).getTime());
+
   return data;
 }
 
-export function formatRewardRequestsForExcel(requests: any[]) {
-  return requests.map(request => {
+export function formatRewardRequestsForExcel(requests: any[], dateRange?: { from?: Date; to?: Date }) {
+  // Filtrar registros por rango de fechas si está definido
+  const filteredRequests = dateRange?.from || dateRange?.to 
+    ? requests.filter(request => {
+        const requestDate = new Date(request.requestDate);
+        // Normalizar fechas (ignorar horas/minutos/segundos)
+        const normalizedRequestDate = new Date(
+          requestDate.getFullYear(),
+          requestDate.getMonth(),
+          requestDate.getDate()
+        );
+        const normalizedFrom = dateRange.from 
+          ? new Date(
+              dateRange.from.getFullYear(),
+              dateRange.from.getMonth(),
+              dateRange.from.getDate()
+            )
+          : null;
+        const normalizedTo = dateRange.to
+          ? new Date(
+              dateRange.to.getFullYear(),
+              dateRange.to.getMonth(),
+              dateRange.to.getDate()
+            )
+          : null;
+        
+        const fromValid = !normalizedFrom || normalizedRequestDate >= normalizedFrom;
+        const toValid = !normalizedTo || normalizedRequestDate <= normalizedTo;
+        return fromValid && toValid;
+      })
+    : requests;
+
+  return filteredRequests.map(request => {
     const date = new Date(request.requestDate);
     const weekNumber = getWeek(date);
     const monthName = format(date, 'MMMM', { locale: es });

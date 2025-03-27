@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { DateRange } from 'react-day-picker';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { useAuthStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,6 +39,7 @@ export default function Sales() {
   const [sales, setSales] = useState<Sale[]>(generateMockSales());
   const [isNewSaleOpen, setIsNewSaleOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [newSale, setNewSale] = useState({
     products: [] as SaleProduct[]
   });
@@ -278,16 +281,23 @@ export default function Sales() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gestión de Ventas</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Administra las ventas registradas por los vendedores
-          </p>
+        <div className="flex items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Gestión de Ventas</h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Administra las ventas registradas por los vendedores
+            </p>
+          </div>
+          <DateRangePicker 
+            onDateChange={(range) => setDateRange(range)}
+            value={dateRange}
+          />
         </div>
         <ExportButtons
           data={sales}
           recordsFilename="ventas"
           formatForExcel={formatSalesForExcel}
+          dateRange={dateRange}
         />
       </div>
 
