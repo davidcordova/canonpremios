@@ -1,5 +1,31 @@
 [
   {
+    "id": "winner-2025-04-01",
+    "name": "Luciana Castillo",
+    "avatar": "/avatars/12.jpg",
+    "store": "Canon Store Central",
+    "photo": "/photos/photo-12.jpg",
+    "reward": {
+      "name": "Smartwatch Galaxy Watch 6",
+      "points": 3500,
+      "date": "2025-04-02" 
+    },
+    "review": "¡Increíble! Llegó súper rápido."
+  },
+   {
+    "id": "winner-2025-04-02",
+    "name": "Javier Torres",
+    "avatar": "/avatars/13.jpg",
+    "store": "Canon Store Norte",
+    "photo": "/photos/photo-13.jpg",
+    "reward": {
+      "name": "Vale de Compra S/500",
+      "points": 2000,
+      "date": "2025-04-05" 
+    },
+    "review": "Perfecto para mis compras."
+  },
+  {
     "id": "winner-2024-01-01",
     "name": "Isabella Martinez",
     "avatar": "/avatars/04.jpg",
@@ -52,6 +78,19 @@
     "review": "Gracias por el premio."
   },
   {
+    "id": "winner-2024-02-03",
+    "name": "Valentina Diaz",
+    "avatar": "/avatars/10.jpg",
+    "store": "Canon Store Central",
+    "photo": "/photos/photo-10.jpg",
+    "reward": {
+      "name": "Smartwatch",
+      "points": 150,
+      "date": "2024-02-20"
+    },
+    "review": "¡Me encanta mi nuevo smartwatch!"
+  },
+  {
     "id": "winner-2024-03-01",
     "name": "Camila Lopez",
     "avatar": "/avatars/08.jpg",
@@ -76,6 +115,19 @@
       "date": "2024-03-30"
     },
     "review": "Estoy muy feliz."
+  },
+   {
+    "id": "winner-2024-03-03",
+    "name": "Daniel Morales",
+    "avatar": "/avatars/11.jpg",
+    "store": "Canon Store Norte",
+    "photo": "/photos/photo-11.jpg",
+    "reward": {
+      "name": "Vale de Compra S/500",
+      "points": 200,
+      "date": "2024-03-05"
+    },
+    "review": "¡Justo lo que necesitaba!"
   },
   {
     "id": "winner-2024-04-01",
@@ -102,5 +154,18 @@
       "date": "2024-04-20"
     },
     "review": "Muy satisfecha con mi premio, gracias!"
+  },
+  {
+    "id": "winner-2024-04-03",
+    "name": "Carlos Sanchez",
+    "avatar": "/avatars/03.jpg",
+    "store": "Canon Store Sur",
+    "photo": "/photos/photo-03.jpg",
+    "reward": {
+      "name": "Pack Merchandising Premium",
+      "points": 100,
+      "date": "2024-04-08"
+    },
+    "review": "¡Genial el pack!"
   }
 ]
