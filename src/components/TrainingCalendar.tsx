@@ -3,8 +3,6 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 
 interface TrainingEvent {
   id: string;
@@ -21,10 +19,22 @@ interface TrainingEvent {
   };
 }
 
+interface Training {
+  id: string;
+  topic: string;
+  date: string;
+  time: string;
+  status: 'pending' | 'approved' | 'rejected';
+  trainer?: string;
+  description: string;
+}
+
+import { EventClickArg, DateSelectArg } from '@fullcalendar/core';
+
 interface TrainingCalendarProps {
-  trainings: any[];
-  onEventClick?: (event: any) => void;
-  onDateSelect?: (selectInfo: any) => void;
+  trainings: Training[];
+  onEventClick?: (event: EventClickArg) => void;
+  onDateSelect?: (selectInfo: DateSelectArg) => void;
 }
 
 export default function TrainingCalendar({ trainings, onEventClick, onDateSelect }: TrainingCalendarProps) {

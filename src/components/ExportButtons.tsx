@@ -1,24 +1,29 @@
-import { useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { FileDown } from 'lucide-react';
 import { exportChartToPDF, exportToExcel } from '@/lib/export';
 
-interface ExportButtonsProps {
-  chartRef?: React.RefObject<HTMLDivElement>;
-  data: any[];
-  chartTitle?: string;
-  recordsFilename: string;
-  formatForExcel: (data: any[], dateRange?: { from?: Date; to?: Date }) => any[];
-  dateRange?: { from?: Date; to?: Date };
+interface DateRange {
+  from?: Date;
+  to?: Date;
 }
 
-export function ExportButtons({ 
-  chartRef, 
-  data, 
-  chartTitle, 
+interface ExportButtonsProps {
+  chartRef?: React.RefObject<HTMLDivElement>;
+  data: any[]; // Changed from { [key: string]: string }[] to any[]
+  chartTitle?: string;
+  recordsFilename: string;
+  // Changed input type from { [key: string]: string }[] to any[]
+  formatForExcel: (data: any[], dateRange?: DateRange) => { [key: string]: string }[]; 
+  dateRange?: DateRange;
+}
+
+export function ExportButtons({
+  chartRef,
+  data,
+  chartTitle,
   recordsFilename,
   formatForExcel,
-  dateRange 
+  dateRange
 }: ExportButtonsProps) {
   const handleExportPDF = async () => {
     if (chartRef?.current) {

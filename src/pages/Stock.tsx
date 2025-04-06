@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { DateRange } from 'react-day-picker';
-import { DateRangePicker } from '@/components/ui/date-range-picker';
+import { DateRange } from 'react-day-picker'; // Keep for appliedDateRange type
+import '@/components/responsive-table.css'
+// import { DateRangePicker } from '@/components/ui/date-range-picker'; // Removed
 import { useAuthStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+// Keep Input for modals and new date inputs
+import { Input } from '@/components/ui/input'; 
 import { Label } from '@/components/ui/label';
-import { Package, Plus, X, AlertCircle } from 'lucide-react';
+import { Package, Plus, X, AlertCircle, Filter } from 'lucide-react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { generateMockStockRecords, products as mockProducts } from '@/lib/mockData';
 import { ExportButtons } from '@/components/ExportButtons';
@@ -46,7 +48,10 @@ export default function Stock() {
   const [newRecord, setNewRecord] = useState({
     products: [] as StockProduct[]
   });
-  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  // const [dateRange, setDateRange] = useState<DateRange | undefined>(); // Removed
+  const [fromDate, setFromDate] = useState<string>(''); // Added state for "Desde" date string
+  const [toDate, setToDate] = useState<string>(''); // Added state for "Hasta" date string
+  const [appliedDateRange, setAppliedDateRange] = useState<DateRange | undefined>(); // Keep for filtering/export
 
   // Obtener la semana actual
   const currentDate = new Date();
@@ -148,29 +153,28 @@ export default function Stock() {
         )}
 
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
+          <table className="min-w-[1000px] divide-y divide-gray-200 responsive-table">
             <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Semana
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Productos
-                </th>
+              <tr>                
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Semana</th>
+                
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Productos</th>
+                
+               
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {stockRecords
                 .filter(record => record.seller.email === user?.email)
                 .map((record) => (
-                  <tr key={record.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <tr key={record.id} >
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500" data-label="Semana">
                       Semana {format(new Date(record.date), 'w')}
                       <div className="text-xs text-gray-400">
                         {new Date(record.date).toLocaleDateString('es-ES')}
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4" data-label="Productos">
                       <div className="text-sm text-gray-900">
                         {record.products.map((product: any, index: number) => (
                           <div key={index}>
@@ -193,12 +197,12 @@ export default function Stock() {
                 Nuevo Registro de Stock - Semana {currentWeek}
               </Dialog.Title>
               <div className="space-y-4">
-                <div className="space-y-4">
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="col-span-2">
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    
                       <select
                         value={selectedProduct}
-                        onChange={(e) => setSelectedProduct(e.target.value)}
+                        onChange={(e) => setSelectedProduct(e.target.value)}                                              
                         className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
                       >
                         <option value="">Seleccionar producto</option>
@@ -208,16 +212,17 @@ export default function Stock() {
                           </option>
                         ))}
                       </select>
-                    </div>
-                    <div className="flex gap-2">
+                    
+                    <div className="flex gap-2 items-center">
                       <Input
                         type="number"
                         min="0"
                         value={currentStock}
                         onChange={(e) => setCurrentStock(e.target.value)}
                         placeholder="Stock"
-                        className="w-24"
+                        className="w-full"
                       />
+                      
                       <Button type="button" onClick={handleAddProduct}>
                         Agregar
                       </Button>
@@ -262,6 +267,7 @@ export default function Stock() {
                 </div>
 
                 <div className="pt-4 border-t flex justify-end gap-2">
+                  
                   <Button
                     variant="outline"
                     onClick={() => setIsNewRecordOpen(false)}
@@ -284,50 +290,106 @@ export default function Stock() {
   }
 
   // Vista del administrador
+
+  const handleFilterClick = () => {
+    // Validate and set the applied date range
+    if (fromDate && toDate) {
+      const from = new Date(fromDate);
+      const to = new Date(toDate);
+      if (!isNaN(from.getTime()) && !isNaN(to.getTime()) && from <= to) {
+        // Adjust 'to' date to include the whole day
+        to.setHours(23, 59, 59, 999);
+        setAppliedDateRange({ from, to });
+      } else {
+        console.error("Invalid date range selected");
+        setAppliedDateRange(undefined);
+      }
+    } else {
+      setAppliedDateRange(undefined);
+    }
+  };
+
+  const filteredStockRecords = stockRecords.filter(record => {
+    if (!appliedDateRange?.from || !appliedDateRange?.to) {
+      return true; // No filter applied yet or incomplete range
+    }
+    const recordDate = new Date(record.date);
+    // Normalize dates to compare day only
+    const normalizedRecordDate = new Date(recordDate.getFullYear(), recordDate.getMonth(), recordDate.getDate());
+    const normalizedFrom = new Date(appliedDateRange.from.getFullYear(), appliedDateRange.from.getMonth(), appliedDateRange.from.getDate());
+    const normalizedTo = new Date(appliedDateRange.to.getFullYear(), appliedDateRange.to.getMonth(), appliedDateRange.to.getDate());
+
+    return normalizedRecordDate >= normalizedFrom && normalizedRecordDate <= normalizedTo;
+  });
+
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Revisión de Stock</h1>
-            <p className="text-sm text-gray-500 mt-1">
+      <div className="flex justify-between items-center flex-wrap gap-4"> {/* Added flex-wrap and gap */}
+        {/* Left side: Title */}
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Revisión de Stock</h1>
+          <p className="text-sm text-gray-500 mt-1">
               Revisa los registros de stock enviados por los vendedores
             </p>
+        </div>
+
+        {/* Right side: Filter and Export */}
+        <div className="flex items-end gap-2"> {/* Use items-end */}
+          {/* "Desde" Date Input */}
+          <div className="grid gap-1.5">
+            <Label htmlFor="fromDate">Desde</Label>
+            <Input
+              id="fromDate"
+              type="date"
+              value={fromDate}
+              onChange={(e) => setFromDate(e.target.value)}
+              className="w-auto"
+            />
           </div>
-          <DateRangePicker 
-            onDateChange={(range) => setDateRange(range)}
-            value={dateRange}
+          {/* "Hasta" Date Input */}
+          <div className="grid gap-1.5">
+            <Label htmlFor="toDate">Hasta</Label>
+            <Input
+              id="toDate"
+              type="date"
+              value={toDate}
+              onChange={(e) => setToDate(e.target.value)}
+              className="w-auto"
+            />
+          </div>
+          {/* Filter Button */}
+          <Button onClick={handleFilterClick} disabled={!fromDate || !toDate}>
+            <Filter className="mr-2 h-4 w-4" />
+            Filtrar
+          </Button>
+          <ExportButtons
+            data={filteredStockRecords} // Export filtered data
+            recordsFilename="registros-stock"
+            formatForExcel={formatStockForExcel}
+            dateRange={appliedDateRange} // Pass applied range for consistency if format func uses it
           />
         </div>
-        <ExportButtons
-          data={stockRecords}
-          recordsFilename="registros-stock"
-          formatForExcel={formatStockForExcel}
-          dateRange={dateRange}
-        />
       </div>
 
+
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
+        <table className="min-w-[1000px] divide-y divide-gray-200 responsive-table">
           <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Vendedor
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Semana
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Productos
-              </th>
+            <tr>             
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Semana</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Productos</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {stockRecords.map((record) => (
-              <tr key={record.id}>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center">
-                    <img
+            {/* Map over filtered records */}
+            {filteredStockRecords.map((record) => (
+              <tr key={record.id} >
+
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500" data-label="Semana">
+                  Semana {format(new Date(record.date), 'w')}
+                  <div className="text-xs text-gray-400">
+                  <img
                       src={record.seller.avatar}
                       alt={record.seller.name}
                       className="h-8 w-8 rounded-full"
@@ -338,25 +400,20 @@ export default function Stock() {
                       </div>
                       <div className="text-sm text-gray-500">
                         {record.seller.email}
-                      </div>
+                      </div>                    
                     </div>
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  Semana {format(new Date(record.date), 'w')}
-                  <div className="text-xs text-gray-400">
-                    {new Date(record.date).toLocaleDateString('es-ES')}
-                  </div>
-                </td>
-                <td className="px-6 py-4">
+                <td className="px-6 py-4" data-label="Productos">
                   <div className="text-sm text-gray-900">
-                    {record.products.map((product: any, index: number) => (
+                   {record.products.map((product: any, index: number) => (
                       <div key={index}>
                         {product.model}: {product.currentStock} ({product.difference > 0 ? '+' : ''}{product.difference})
                       </div>
                     ))}
                   </div>
                 </td>
+                
               </tr>
             ))}
           </tbody>

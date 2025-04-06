@@ -164,16 +164,15 @@ export default function Companies() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                RUC
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Razón Social</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CUIT</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dirección</th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Acciones
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Razón Social
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Ciudad
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+
+              
+              {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Aniversario
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -181,10 +180,7 @@ export default function Companies() {
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Fecha de Registro
-              </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Acciones
-              </th>
+              </th> */}
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -192,11 +188,11 @@ export default function Companies() {
               <tr key={company.id}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {company.ruc}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                </td>  
+                <td className="px-6 py-4 whitespace-nowrap" data-label="Name">
                   <div className="flex items-center">
                     <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Building2 className="h-4 w-4 text-primary" />
+                      <Building2 className="h-4 w-4 text-primary"/>
                     </div>
                     <div className="ml-4">
                       <div className="text-sm font-medium text-gray-900">{company.name}</div>
@@ -205,37 +201,30 @@ export default function Companies() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center gap-2 text-sm text-gray-900">
-                    <MapPin className="h-4 w-4 text-gray-400" />
+                  <MapPin className="h-4 w-4 text-gray-400"/>
                     {company.city}
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                
+                
+                {/* <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center gap-2 text-sm text-gray-900">
-                    <Calendar className="h-4 w-4 text-gray-400" />
-                    {new Date(company.anniversaryDate).toLocaleDateString('es-ES')}
+                  <Calendar className="h-4 w-4 text-gray-400"/>
+                  {new Date(company.anniversaryDate).toLocaleDateString('es-ES')}
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    company.status === 'active'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-red-100 text-red-800'
-                  }`}>
-                    {company.status === 'active' ? 'Activa' : 'Inactiva'}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {new Date(company.createdAt).toLocaleDateString('es-ES')}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                
+                
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(company.createdAt).toLocaleDateString('es-ES')}</td> */}
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium" data-label="Actions">
                   <div className="flex justify-end gap-2">
                     <Button 
                       variant="outline" 
                       size="sm"
                       onClick={() => openEditCompany(company)}
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-2 hover:bg-gray-100"
                     >
-                      <Edit className="h-4 w-4" />
+                      <Edit className="h-4 w-4"/>
                       Editar
                     </Button>
                     <Button 
@@ -244,7 +233,7 @@ export default function Companies() {
                       onClick={() => openDeleteCompany(company)}
                       className="flex items-center gap-2 text-red-600 hover:text-red-700"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-4 w-4"/>
                       Eliminar
                     </Button>
                   </div>
@@ -259,11 +248,11 @@ export default function Companies() {
       <Dialog.Root open={isNewCompanyOpen} onOpenChange={setIsNewCompanyOpen}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/50" />
-          <Dialog.Content className="dialog-content fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+          <Dialog.Content className="dialog-content fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg p-6 w-full max-w-md sm:max-w-[90%] md:max-w-md">
             <Dialog.Title className="text-lg font-semibold mb-4">
               Nueva Empresa
             </Dialog.Title>
-            <div className="space-y-4">
+            <div className="space-y-4 flex flex-col">
               <div className="space-y-2">
                 <Label htmlFor="ruc">RUC</Label>
                 <Input
@@ -304,7 +293,7 @@ export default function Companies() {
                 />
               </div>
 
-              <div className="pt-4 border-t flex justify-end gap-2">
+              <div className="pt-4 border-t flex flex-col sm:flex-row justify-end gap-2 w-full">
                 <Button
                   variant="outline"
                   onClick={() => setIsNewCompanyOpen(false)}
@@ -327,11 +316,11 @@ export default function Companies() {
       <Dialog.Root open={isEditCompanyOpen} onOpenChange={setIsEditCompanyOpen}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/50" />
-          <Dialog.Content className="dialog-content fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+          <Dialog.Content className="dialog-content fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg p-6 w-full max-w-md sm:max-w-[90%] md:max-w-md">
             <Dialog.Title className="text-lg font-semibold mb-4">
               Editar Empresa
             </Dialog.Title>
-            <div className="space-y-4">
+            <div className="space-y-4 flex flex-col">
               <div className="space-y-2">
                 <Label htmlFor="edit-ruc">RUC</Label>
                 <Input
@@ -382,7 +371,7 @@ export default function Companies() {
                 </select>
               </div>
 
-              <div className="pt-4 border-t flex justify-end gap-2">
+              <div className="pt-4 border-t flex flex-col sm:flex-row justify-end gap-2 w-full">
                 <Button
                   variant="outline"
                   onClick={() => setIsEditCompanyOpen(false)}

@@ -3,11 +3,14 @@ import { useAuthStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Gift, Calendar, Star, Plus, Upload, Edit, Trash2, AlertCircle, ImageIcon } from 'lucide-react';
+import { Gift, Calendar as CalendarIcon, Star, Plus, Upload, Edit, Trash2, AlertCircle, ImageIcon, Filter } from 'lucide-react';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
+// import { DateRangePicker } from '@/components/ui/date-range-picker'; // Removed
+import { DateRange } from 'react-day-picker'; // Keep for appliedDateRange type
 import { ExportButtons } from '@/components/ExportButtons';
 import { formatRewardRequestsForExcel } from '@/lib/export';
+// Input is already imported above, removing duplicate
 
 interface Reward {
   id: string;
@@ -118,6 +121,10 @@ export default function Rewards() {
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'tecnología' | 'vales' | 'merchandising'>('all');
   const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
+  // const [dateRange, setDateRange] = useState<DateRange | undefined>(); // Removed
+  const [fromDate, setFromDate] = useState<string>(''); // Added state for "Desde" date string
+  const [toDate, setToDate] = useState<string>(''); // Added state for "Hasta" date string
+  const [appliedDateRange, setAppliedDateRange] = useState<DateRange | undefined>(); // Keep for filtering/export
   const [isNewRewardOpen, setIsNewRewardOpen] = useState(false);
   const [isEditRewardOpen, setIsEditRewardOpen] = useState(false);
   const [isDeleteRewardOpen, setIsDeleteRewardOpen] = useState(false);
@@ -273,6 +280,41 @@ export default function Rewards() {
     selectedCategory === 'all' || reward.category === selectedCategory
   );
 
+  const handleFilterClick = () => { // Updated
+    // Validate and set the applied date range
+    if (fromDate && toDate) {
+      const from = new Date(fromDate);
+      const to = new Date(toDate);
+      if (!isNaN(from.getTime()) && !isNaN(to.getTime()) && from <= to) {
+        // Adjust 'to' date to include the whole day
+        to.setHours(23, 59, 59, 999);
+        setAppliedDateRange({ from, to });
+      } else {
+        console.error("Invalid date range selected");
+        setAppliedDateRange(undefined);
+      }
+    } else {
+      setAppliedDateRange(undefined);
+    }
+  };
+
+  // Filter requests by date first for export and display
+  const dateFilteredRequests = requests.filter(request => { // Added
+    if (!appliedDateRange?.from || !appliedDateRange?.to) {
+      return true; // No filter applied yet or incomplete range
+    }
+    const requestDate = new Date(request.requestDate);
+    // Normalize dates to compare day only
+    const normalizedRequestDate = new Date(requestDate.getFullYear(), requestDate.getMonth(), requestDate.getDate());
+    const normalizedFrom = new Date(appliedDateRange.from.getFullYear(), appliedDateRange.from.getMonth(), appliedDateRange.from.getDate());
+    const normalizedTo = new Date(appliedDateRange.to.getFullYear(), appliedDateRange.to.getMonth(), appliedDateRange.to.getDate());
+
+    return normalizedRequestDate >= normalizedFrom && normalizedRequestDate <= normalizedTo;
+  });
+
+  // Further filter by status === 'pending' only for the table display
+  const pendingFilteredRequests = dateFilteredRequests.filter(request => request.status === 'pending'); // Added
+
   if (user?.role === 'seller') {
     return (
       <div className="space-y-6">
@@ -360,17 +402,20 @@ export default function Rewards() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Premio
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Fecha
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Estado
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Puntos
+                  </th>
+                  <th scope="col" className="relative py-3 pl-3 pr-4 sm:pr-6">
+                    <span className="sr-only">Puntos</span>
                   </th>
                 </tr>
               </thead>
@@ -378,15 +423,15 @@ export default function Rewards() {
                 {requests
                   .filter(request => request.userId === user.id)
                   .map((request) => (
-                    <tr key={request.id}>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                    <tr key={request.id} >
+                      <td className="px-6 py-4 whitespace-nowrap" data-label="Premio">
                         <div className="text-sm font-medium text-gray-900">
                           {request.rewardName}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500" data-label="Fecha">
                         {new Date(request.requestDate).toLocaleDateString('es-ES')}
-                      </td>
+                      </td>  
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                           request.status === 'approved'
@@ -402,7 +447,7 @@ export default function Rewards() {
                           <p className="mt-1 text-sm text-gray-500">{request.comments}</p>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <td className="px-6 py-4 whitespace-nowrap text-right" data-label="Puntos">
                         <div className="text-sm font-medium text-primary">
                           {request.points} pts
                         </div>
@@ -488,9 +533,10 @@ export default function Rewards() {
         </div>
         <div className="flex gap-2">
           <ExportButtons
-            data={requests}
+            data={dateFilteredRequests} // Export date-filtered requests (all statuses)
             recordsFilename="solicitudes-premios"
             formatForExcel={formatRewardRequestsForExcel}
+            dateRange={appliedDateRange} // Pass applied range
           />
           <Button onClick={() => setIsNewRewardOpen(true)} className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
@@ -587,50 +633,84 @@ export default function Rewards() {
 
       {/* Solicitudes Pendientes */}
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold text-gray-900">Solicitudes Pendientes</h2>
-        
+        <div className="flex justify-between items-center flex-wrap gap-4">
+          <h2 className="text-xl font-semibold text-gray-900">Solicitudes Pendientes</h2>
+          {/* Filter controls for Requests */}
+          <div className="flex items-end gap-2"> {/* Use items-end */}
+             {/* "Desde" Date Input */}
+             <div className="grid gap-1.5">
+              <Label htmlFor="fromDate">Desde</Label>
+              <Input
+                id="fromDate"
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                className="w-auto"
+              />
+            </div>
+            {/* "Hasta" Date Input */}
+            <div className="grid gap-1.5">
+              <Label htmlFor="toDate">Hasta</Label>
+              <Input
+                id="toDate"
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                className="w-auto"
+              />
+            </div>
+            {/* Filter Button */}
+            <Button onClick={handleFilterClick} disabled={!fromDate || !toDate}>
+              <Filter className="mr-2 h-4 w-4" />
+              Filtrar Solicitudes
+            </Button>
+          </div>
+        </div>
+
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
+          <table className="min-w-full divide-y divide-gray-200 responsive-table"> {/* Added responsive-table class */}
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Vendedor
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Premio
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Fecha
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Estado
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Acciones
                 </th>
+                <th scope="col" className="relative py-3 pl-3 pr-4 sm:pr-6">
+                    <span className="sr-only">Actions</span>
+                  </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {requests
-                .filter(request => request.status === 'pending')
-                .map((request) => (
+              {/* Map over pendingFilteredRequests */}
+              {pendingFilteredRequests.map((request) => (
                   <tr key={request.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4 whitespace-nowrap" data-label="Vendedor">
                       <div className="text-sm font-medium text-gray-900">
                         {request.userName}
                       </div>
                       <div className="text-sm text-gray-500">
                         {request.userStore}
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    </td> 
+                    <td className="px-6 py-4 whitespace-nowrap" data-label="Premio">
                       <div className="text-sm font-medium text-gray-900">
                         {request.rewardName}
                       </div>
                       <div className="text-sm text-primary">
                         {request.points} pts
                       </div>
-                    </td>
+                    </td>   
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {new Date(request.requestDate).toLocaleDateString('es-ES')}
                     </td>
@@ -670,7 +750,7 @@ export default function Rewards() {
       <Dialog.Root open={isNewRewardOpen} onOpenChange={setIsNewRewardOpen}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/50" />
-          <Dialog.Content className="dialog-content fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+          <Dialog.Content className="dialog-content fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg p-6 w-full max-w-md space-y-4">
             <Dialog.Title className="text-lg font-semibold mb-4">
               Nuevo Premio
             </Dialog.Title>
@@ -687,7 +767,7 @@ export default function Rewards() {
 
               <div className="space-y-2">
                 <Label htmlFor="description">Descripción</Label>
-                <Input
+                <Input className="w-full"
                   id="description"
                   value={newReward.description}
                   onChange={(e) => setNewReward({ ...newReward, description: e.target.value })}
@@ -698,7 +778,7 @@ export default function Rewards() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="points">Puntos</Label>
-                  <Input
+                  <Input className="w-full"
                     id="points"
                     type="number"
                     value={newReward.points}
@@ -709,7 +789,7 @@ export default function Rewards() {
 
                 <div className="space-y-2">
                   <Label htmlFor="stock">Stock</Label>
-                  <Input
+                  <Input className="w-full"
                     id="stock"
                     type="number"
                     value={newReward.stock}
@@ -725,7 +805,7 @@ export default function Rewards() {
                   id="category"
                   value={newReward.category}
                   onChange={(e) => setNewReward({ ...newReward, category: e.target.value as 'tecnología' | 'vales' | 'merchandising' })}
-                  className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring w-full"
                 >
                   <option value="tecnología">Tecnología</option>
                   <option value="vales">Vales</option>
@@ -735,7 +815,7 @@ export default function Rewards() {
 
               <div className="space-y-2">
                 <Label htmlFor="image">URL de la Imagen</Label>
-                <Input
+                <Input className="w-full"
                   id="image"
                   value={newReward.image}
                   onChange={(e) => setNewReward({ ...newReward, image: e.target.value })}
@@ -747,7 +827,7 @@ export default function Rewards() {
               </div>
 
               <div className="pt-4 border-t flex justify-end gap-2">
-                <Button
+                <Button className="w-full"
                   variant="outline"
                   onClick={() => setIsNewRewardOpen(false)}
                 >
@@ -769,7 +849,7 @@ export default function Rewards() {
       <Dialog.Root open={isEditRewardOpen} onOpenChange={setIsEditRewardOpen}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/50" />
-          <Dialog.Content className="dialog-content fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+          <Dialog.Content className="dialog-content fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg p-6 w-full max-w-md space-y-4">
             <Dialog.Title className="text-lg font-semibold mb-4">
               Editar Premio
             </Dialog.Title>
@@ -777,7 +857,7 @@ export default function Rewards() {
               <div className="space-y-2">
                 <Label htmlFor="edit-name">Nombre del Premio</Label>
                 <Input
-                  id="edit-name"
+                className="w-full" id="edit-name"
                   value={newReward.name}
                   onChange={(e) => setNewReward({ ...newReward, name: e.target.value })}
                 />
@@ -785,7 +865,7 @@ export default function Rewards() {
 
               <div className="space-y-2">
                 <Label htmlFor="edit-description">Descripción</Label>
-                <Input
+                <Input className="w-full"
                   id="edit-description"
                   value={newReward.description}
                   onChange={(e) => setNewReward({ ...newReward, description: e.target.value })}
@@ -796,7 +876,7 @@ export default function Rewards() {
                 <div className="space-y-2">
                   <Label htmlFor="edit-points">Puntos</Label>
                   <Input
-                    id="edit-points"
+                  className="w-full"  id="edit-points"
                     type="number"
                     value={newReward.points}
                     onChange={(e) => setNewReward({ ...newReward, points: e.target.value })}
@@ -806,7 +886,7 @@ export default function Rewards() {
                 <div className="space-y-2">
                   <Label htmlFor="edit-stock">Stock</Label>
                   <Input
-                    id="edit-stock"
+                className="w-full"    id="edit-stock"
                     type="number"
                     value={newReward.stock}
                     onChange={(e) => setNewReward({ ...newReward, stock: e.target.value })}
@@ -820,7 +900,7 @@ export default function Rewards() {
                   id="edit-category"
                   value={newReward.category}
                   onChange={(e) => setNewReward({ ...newReward, category: e.target.value as 'tecnología' | 'vales' | 'merchandising' })}
-                  className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring w-full"
                 >
                   <option value="tecnología">Tecnología</option>
                   <option value="vales">Vales</option>
@@ -830,7 +910,7 @@ export default function Rewards() {
 
               <div className="space-y-2">
                 <Label htmlFor="edit-image">URL de la Imagen</Label>
-                <Input
+                <Input className="w-full"
                   id="edit-image"
                   value={newReward.image}
                   onChange={(e) => setNewReward({ ...newReward, image: e.target.value })}
@@ -838,7 +918,7 @@ export default function Rewards() {
               </div>
 
               <div className="pt-4 border-t flex justify-end gap-2">
-                <Button
+                <Button className="w-full"
                   variant="outline"
                   onClick={() => setIsEditRewardOpen(false)}
                 >
@@ -861,13 +941,13 @@ export default function Rewards() {
         <AlertDialog.Portal>
           <AlertDialog.Overlay className="fixed inset-0 bg-black/50" />
           <AlertDialog.Content className="dialog-content fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-            <AlertDialog.Title className="text-lg font-semibold mb-4">
+            <AlertDialog.Title className="text-lg font-semibold mb-4 w-full">
               Confirmar Eliminación
             </AlertDialog.Title>
-            <AlertDialog.Description className="text-sm text-gray-500 mb-4">
+            <AlertDialog.Description className="text-sm text-gray-500 mb-4 w-full">
               ¿Estás seguro que deseas eliminar el premio "{selectedReward?.name}"? Esta acción no se puede deshacer.
             </AlertDialog.Description>
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-2 w-full">
               <AlertDialog.Cancel asChild>
                 <Button variant="outline">Cancelar</Button>
               </AlertDialog.Cancel>

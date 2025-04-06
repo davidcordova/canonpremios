@@ -1,7 +1,7 @@
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import * as XLSX from 'xlsx';
-import { format, getWeek, startOfWeek, endOfWeek } from 'date-fns';
+import { format, getWeek, subDays, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 export async function exportChartToPDF(chartRef: HTMLElement, title: string) {
@@ -30,7 +30,29 @@ export function exportToExcel<T>(data: T[], filename: string) {
   XLSX.writeFile(workbook, `${filename}.xlsx`);
 }
 
-export function formatSalesForExcel(sales: any[], dateRange?: { from?: Date; to?: Date }) {
+interface DateRange {
+  from?: Date;
+  to?: Date;
+}
+
+interface Sale {
+  date: string;
+  seller?: {
+    company?: string;
+    name?: string;
+  };
+  products: { model: string; quantity: number }[];
+}
+
+interface ExcelRow {
+  'EMPRESA': string;
+  'VENDEDOR': string;
+  'FECHA': string;
+  'HORA': string;
+  [product: string]: number | string | undefined;
+}
+
+export function formatSalesForExcel(sales: Sale[], dateRange?: DateRange) {
   // Filtrar registros por rango de fechas si está definido
   const filteredSales = dateRange?.from || dateRange?.to 
     ? sales.filter(sale => {
@@ -75,7 +97,7 @@ export function formatSalesForExcel(sales: any[], dateRange?: { from?: Date; to?
     // Inicializar objeto con empresa
     const row: any = {
       'EMPRESA': company,
-      'VENDEDOR': sales.find(s => s.seller?.company === company)?.seller?.name || '',
+      'VENDEDOR': sales.find(s => s.seller?.company === company)?.seller?.name || '-',
       'FECHA': '',
       'HORA': ''
     };
@@ -142,7 +164,7 @@ export function formatPurchasesForExcel(purchases: any[], dateRange?: { from?: D
       'Hora': purchase.time,
       'Semana': `Semana ${weekNumber}`,
       'Mes': monthName.charAt(0).toUpperCase() + monthName.slice(1),
-      'Año': date.getFullYear(),
+      'Año': date.getFullYear().toString(), // Convert number to string
       'Vendedor': purchase.seller?.name || '-',
       'Empresa': purchase.seller?.company || '-',
       'Tipo': purchase.documentType === 'factura' ? 'Factura' : 'Boleta',
@@ -161,11 +183,11 @@ export function formatProductsForExcel(products: any[]) {
     'Código': product.code,
     'Modelo': product.model,
     'Tipo': product.type,
-    'Puntos': product.points
+    'Puntos': product.points.toString() // Convert number to string
   }));
 }
 
-export function formatWinnersForExcel(winners: any[], dateRange?: { from?: Date; to?: Date }) {
+export function formatWinnersForExcel(winners: any[], dateRange?: { from?: Date; to?: Date }): { [key: string]: string }[] {
   // Filtrar registros por rango de fechas si está definido
   const filteredWinners = dateRange?.from || dateRange?.to 
     ? winners.filter(winner => {
@@ -206,11 +228,11 @@ export function formatWinnersForExcel(winners: any[], dateRange?: { from?: Date;
       'Fecha': new Date(winner.reward.date).toLocaleDateString('es-ES'),
       'Semana': `Semana ${weekNumber}`,
       'Mes': monthName.charAt(0).toUpperCase() + monthName.slice(1),
-      'Año': date.getFullYear(),
+      'Año': date.getFullYear().toString(),
       'Vendedor': winner.name,
       'Empresa': winner.store,
       'Premio': winner.reward.name,
-      'Puntos': winner.reward.points,
+      'Puntos': winner.reward.points.toString(),
       'Stock': winner.reward.stock,
       'Comentarios': winner.review
     };
@@ -272,7 +294,7 @@ export function formatStockForExcel(records: any[], dateRange?: { from?: Date; t
     };
 
     // Agregar columnas para cada producto con el stock actual
-    products.forEach((product: string) => {
+    products.forEach(product => {
       const productData = record.products.find((p: {model: string}) => p.model === product);
       if (productData) {
         row[product] = productData.currentStock;
@@ -333,7 +355,7 @@ export function formatRewardRequestsForExcel(requests: any[], dateRange?: { from
       'Fecha': new Date(request.requestDate).toLocaleDateString('es-ES'),
       'Semana': `Semana ${weekNumber}`,
       'Mes': monthName.charAt(0).toUpperCase() + monthName.slice(1),
-      'Año': date.getFullYear(),
+      'Año': date.getFullYear().toString(), // Convert number to string
       'Vendedor': request.userName,
       'Tienda': request.userStore,
       'Premio': request.rewardName,

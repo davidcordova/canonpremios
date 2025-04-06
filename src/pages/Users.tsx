@@ -395,7 +395,7 @@ export default function Users() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
         {filteredUsers.map((user) => (
           <div key={user.id} className="bg-white rounded-lg shadow-sm overflow-hidden">
             <div className="p-6">
@@ -508,11 +508,43 @@ export default function Users() {
         ))}
       </div>
 
+      {/* Tabla para vista movil */}
+      <div className="overflow-x-auto w-full mt-6">
+        <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400 border-separate border-spacing-0">
+          <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+            <tr>
+              <th scope="col" className="px-6 py-3">Nombre</th>
+              <th scope="col" className="px-6 py-3">Email</th>
+              <th scope="col" className="px-6 py-3">Empresa</th>
+              <th scope="col" className="px-6 py-3">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredUsers.map(user => (
+              <tr key={user.id} className="bg-white dark:bg-gray-800">
+                <td data-label="Nombre" className="px-6 py-4 whitespace-nowrap">{user.name}</td>
+                <td data-label="Email" className="px-6 py-4 whitespace-nowrap">{user.email}</td>
+                <td data-label="Empresa" className="px-6 py-4 whitespace-nowrap">{user.company}</td>
+                <td data-label="Acciones" className="px-6 py-4 whitespace-nowrap">
+                  <Button variant="outline" size="sm" className="mr-2" onClick={() => openEditUser(user)}><Edit className="h-4 w-4" /></Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2 text-red-600 hover:text-red-700"
+                    onClick={() => confirmDelete(user)}><Trash2 className="h-4 w-4" />
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
       {/* Modal para nuevo usuario */}
       <Dialog.Root open={isNewUserOpen} onOpenChange={setIsNewUserOpen}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/50" />
-          <Dialog.Content className="dialog-content fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg w-full max-w-md">
+          <Dialog.Content className="dialog-content fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg w-[90%] md:w-full md:max-w-md">
             <div className="p-6">
               <Dialog.Title className="text-lg font-semibold mb-4">
                 Agregar Nuevo Usuario
@@ -540,7 +572,7 @@ export default function Users() {
                       onChange={handleNewUserAvatarChange}
                     />
                   </div>
-                </div>
+                </div>                
                 
                 <div className="space-y-2">
                   <Label htmlFor="name">Nombre Completo</Label>
@@ -550,7 +582,7 @@ export default function Users() {
                     onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
                   />
                 </div>
-
+                
                 <div className="space-y-2">
                   <Label htmlFor="email">Correo Electrónico</Label>
                   <Input
@@ -559,7 +591,7 @@ export default function Users() {
                     value={newUser.email}
                     onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
                   />
-                </div>
+                </div>                
 
                 <div className="space-y-2">
                   <Label htmlFor="password">Contraseña</Label>
@@ -569,7 +601,7 @@ export default function Users() {
                     value={newUser.password}
                     onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
                   />
-                </div>
+                </div>                
 
                 <div className="space-y-2">
                   <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
@@ -579,7 +611,7 @@ export default function Users() {
                     value={newUser.confirmPassword}
                     onChange={(e) => setNewUser({ ...newUser, confirmPassword: e.target.value })}
                   />
-                </div>
+                </div>                
 
                 <div className="space-y-2">
                   <Label htmlFor="role">Perfil</Label>
@@ -593,7 +625,7 @@ export default function Users() {
                     <option value="admin">Administrador</option>
                   </select>
                 </div>
-
+                
                 <div className="space-y-2">
                   <Label htmlFor="company">Empresa</Label>
                   <select
@@ -610,7 +642,7 @@ export default function Users() {
                     ))}
                   </select>
                 </div>
-
+                
                 <div className="space-y-2">
                   <Label htmlFor="phone">Teléfono</Label>
                   <Input
@@ -619,7 +651,7 @@ export default function Users() {
                     onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })}
                   />
                 </div>
-
+                
                 <div className="space-y-2">
                   <Label htmlFor="address">Dirección</Label>
                   <Input
@@ -628,7 +660,7 @@ export default function Users() {
                     onChange={(e) => setNewUser({ ...newUser, address: e.target.value })}
                   />
                 </div>
-
+                
                 <div className="space-y-2">
                   <Label htmlFor="birthDate">Fecha de Nacimiento</Label>
                   <Input
@@ -637,7 +669,7 @@ export default function Users() {
                     value={newUser.birthDate}
                     onChange={(e) => setNewUser({ ...newUser, birthDate: e.target.value })}
                   />
-                </div>
+                </div>                
 
                 {newUser.role === 'seller' && (
                   <>
@@ -686,7 +718,7 @@ export default function Users() {
       <Dialog.Root open={isEditUserOpen} onOpenChange={setIsEditUserOpen}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/50" />
-          <Dialog.Content className="dialog-content fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg w-full max-w-md">
+          <Dialog.Content className="dialog-content fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg w-[90%] md:w-full md:max-w-md">
             <div className="p-6">
               <Dialog.Title className="text-lg font-semibold mb-4">
                 Editar Usuario
@@ -700,7 +732,7 @@ export default function Users() {
                     onChange={(e) => setEditUser({ ...editUser, name: e.target.value })}
                   />
                 </div>
-
+                
                 <div className="space-y-2">
                   <Label htmlFor="edit-email">Correo Electrónico</Label>
                   <Input
@@ -709,7 +741,7 @@ export default function Users() {
                     value={editUser.email}
                     onChange={(e) => setEditUser({ ...editUser, email: e.target.value })}
                   />
-                </div>
+                </div>                
 
                 <div className="space-y-2">
                   <Label htmlFor="edit-role">Perfil</Label>
@@ -723,7 +755,7 @@ export default function Users() {
                     <option value="admin">Administrador</option>
                   </select>
                 </div>
-
+                
                 <div className="space-y-2">
                   <Label htmlFor="edit-company">Empresa</Label>
                   <select
@@ -740,7 +772,7 @@ export default function Users() {
                     ))}
                   </select>
                 </div>
-
+                
                 <div className="space-y-2">
                   <Label htmlFor="edit-phone">Teléfono</Label>
                   <Input
@@ -749,7 +781,7 @@ export default function Users() {
                     onChange={(e) => setEditUser({ ...editUser, phone: e.target.value })}
                   />
                 </div>
-
+                
                 <div className="space-y-2">
                   <Label htmlFor="edit-address">Dirección</Label>
                   <Input
@@ -758,7 +790,7 @@ export default function Users() {
                     onChange={(e) => setEditUser({ ...editUser, address: e.target.value })}
                   />
                 </div>
-
+                
                 <div className="space-y-2">
                   <Label htmlFor="edit-birthDate">Fecha de Nacimiento</Label>
                   <Input
@@ -767,7 +799,7 @@ export default function Users() {
                     value={editUser.birthDate}
                     onChange={(e) => setEditUser({ ...editUser, birthDate: e.target.value })}
                   />
-                </div>
+                </div>                
 
                 {editUser.role === 'seller' && (
                   <>
@@ -810,7 +842,7 @@ export default function Users() {
                     <option value="inactive">Inactivo</option>
                   </select>
                 </div>
-
+                
                 <div className="pt-4 border-t flex justify-end gap-2">
                   <Button
                     variant="outline"

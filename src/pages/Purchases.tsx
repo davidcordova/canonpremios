@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import { DateRange } from 'react-day-picker';
-import { DateRangePicker } from '@/components/ui/date-range-picker';
+import { DateRange } from 'react-day-picker'; // Keep for appliedDateRange type
 import { useAuthStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus, Search, Package, X, Upload, CheckCircle, XCircle, Eye, AlertCircle } from 'lucide-react';
+import { Plus, Search, Package, X, Upload, CheckCircle, XCircle, Eye, AlertCircle, Filter } from 'lucide-react'; // Added Filter
 import * as Dialog from '@radix-ui/react-dialog';
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
 import { ExportButtons } from '@/components/ExportButtons';
@@ -64,14 +63,17 @@ export default function Purchases() {
   const [quantity, setQuantity] = useState('1');
   const [currentStock, setCurrentStock] = useState('');
   const [error, setError] = useState('');
+  const [fromDate, setFromDate] = useState<string>(''); // State for "Desde" date string
+  const [toDate, setToDate] = useState<string>(''); // State for "Hasta" date string
+  const [appliedDateRange, setAppliedDateRange] = useState<DateRange | undefined>(undefined); // State for applied filter
 
   const handleNewPurchase = () => {
     if (!newPurchase.documentNumber || !newPurchase.wholesaler || !newPurchase.document || !newPurchase.products.length) {
       return;
     }
 
-    const isDuplicate = purchases.some(purchase => 
-      purchase.documentNumber === newPurchase.documentNumber && 
+    const isDuplicate = purchases.some(purchase =>
+      purchase.documentNumber === newPurchase.documentNumber &&
       purchase.wholesaler === newPurchase.wholesaler
     );
 
@@ -145,7 +147,7 @@ export default function Purchases() {
   const handleReview = () => {
     if (!selectedPurchase) return;
 
-    setPurchases(purchases.map(purchase => 
+    setPurchases(purchases.map(purchase =>
       purchase.id === selectedPurchase.id
         ? {
             ...purchase,
@@ -178,7 +180,39 @@ export default function Purchases() {
     setIsPreviewOpen(true);
   };
 
+  // Filter logic for admin view
+  const handleFilterClick = () => {
+    if (fromDate && toDate) {
+      const from = new Date(fromDate);
+      const to = new Date(toDate);
+      if (!isNaN(from.getTime()) && !isNaN(to.getTime()) && from <= to) {
+        to.setHours(23, 59, 59, 999); // Include end date
+        setAppliedDateRange({ from, to });
+      } else {
+        console.error("Invalid date range selected");
+        setAppliedDateRange(undefined);
+      }
+    } else {
+      setAppliedDateRange(undefined);
+    }
+  };
+
+  const dateFilteredPurchases = purchases.filter(purchase => {
+    if (!appliedDateRange?.from || !appliedDateRange?.to) {
+      return true; // No filter applied
+    }
+    const purchaseDate = new Date(purchase.date);
+    const normalizedPurchaseDate = new Date(purchaseDate.getFullYear(), purchaseDate.getMonth(), purchaseDate.getDate());
+    const normalizedFrom = new Date(appliedDateRange.from.getFullYear(), appliedDateRange.from.getMonth(), appliedDateRange.from.getDate());
+    const normalizedTo = new Date(appliedDateRange.to.getFullYear(), appliedDateRange.to.getMonth(), appliedDateRange.to.getDate());
+    return normalizedPurchaseDate >= normalizedFrom && normalizedPurchaseDate <= normalizedTo;
+  });
+
+  const pendingFilteredPurchases = dateFilteredPurchases.filter(purchase => purchase.status === 'pending');
+
+
   if (user?.role === 'seller') {
+    // Seller View remains unchanged
     return (
       <div className="space-y-6">
         <div className="flex justify-between items-center">
@@ -195,19 +229,28 @@ export default function Purchases() {
         </div>
 
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 responsive-table">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Documento
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Mayorista
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Productos
+                <th
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Fecha
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Estado
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -220,7 +263,7 @@ export default function Purchases() {
                 .filter(purchase => purchase.seller.email === user.email)
                 .map((purchase) => (
                   <tr key={purchase.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4 whitespace-nowrap" data-label="Documento">
                       <div className="flex items-center gap-2">
                         <Button
                           variant="ghost"
@@ -241,23 +284,30 @@ export default function Purchases() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4 whitespace-nowrap" data-label="Mayorista">
                       <div className="text-sm text-gray-900">{purchase.wholesaler}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap" data-label="Fecha">
                       <div className="text-sm text-gray-500">
                         {new Date(purchase.date).toLocaleDateString('es-ES')} {purchase.time}
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">
-                        {purchase.products.map((product, index) => (
-                          <div key={index}>
-                            {product.quantity}x {product.model}
-                          </div>
-                        ))}
+                    <td className="px-6 py-4" data-label="Productos">
+                    <div className="text-sm text-gray-900">
+                      {purchase.products.map((product: any, index: number) => (
+                        <div key={index}>
+                          {product.quantity}x {product.model}
+                        </div>
+                      ))}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    <td className="px-6 py-4 whitespace-nowrap" data-label="Puntos">
+                      <div className="text-sm font-medium text-primary">
+                        {purchase.totalPoints} pts
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap" data-label="Columna">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                         purchase.status === 'approved'
                           ? 'bg-green-100 text-green-800'
                           : purchase.status === 'rejected'
@@ -267,21 +317,17 @@ export default function Purchases() {
                         {purchase.status === 'approved' ? 'Aprobada' :
                          purchase.status === 'rejected' ? 'Rechazada' : 'Pendiente'}
                       </span>
-                      {purchase.comments && (
                         <p className="mt-1 text-sm text-gray-500">{purchase.comments}</p>
-                      )}
+
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <div className="text-sm font-medium text-primary">
-                        {purchase.totalPoints} pts
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                   </tr>
+                  ))}
             </tbody>
-          </table>
+            </table>
+          </div>
         </div>
 
+        {/* New Purchase Modal (Seller) */}
         <Dialog.Root open={isNewPurchaseOpen} onOpenChange={setIsNewPurchaseOpen}>
           <Dialog.Portal>
             <Dialog.Overlay className="fixed inset-0 bg-black/50" />
@@ -290,7 +336,7 @@ export default function Purchases() {
                 <Dialog.Title className="text-lg font-semibold mb-4">
                   Nueva Compra
                 </Dialog.Title>
-                <div className="space-y-6">
+                <div className="space-y-6 w-full">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="documentType">Tipo de Documento</Label>
@@ -374,8 +420,8 @@ export default function Purchases() {
 
                   <div className="space-y-4">
                     <h3 className="text-sm font-medium text-gray-700">Productos</h3>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="col-span-2">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                      <div className="md:col-span-2">
                         <select
                           value={selectedProduct}
                           onChange={(e) => setSelectedProduct(e.target.value)}
@@ -390,13 +436,13 @@ export default function Purchases() {
                         </select>
                       </div>
 
-                      <div className="flex gap-2">
+                      <div className="flex flex-col gap-2 md:flex-row">
                         <Input
                           type="number"
                           min="1"
                           value={quantity}
                           onChange={(e) => setQuantity(e.target.value)}
-                          className="w-24"
+                          className="w-full md:w-24"
                         />
                         <Button type="button" onClick={handleAddProduct}>
                           Agregar
@@ -410,13 +456,13 @@ export default function Purchases() {
                           key={index}
                           className="flex items-center justify-between bg-gray-50 p-2 rounded"
                         >
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-1 items-center gap-2">
                             <Package className="h-4 w-4 text-gray-400" />
                             <span className="text-sm">{product.model}</span>
                             <span className="text-sm text-gray-500">x{product.quantity}</span>
                           </div>
-                          <div className="flex items-center gap-4">
-                            <span className="text-sm font-medium text-primary">
+                          <div className="flex w-max items-center gap-4">
+                            <span className="text-sm font-medium text-primary text-nowrap">
                               {product.points} pts
                             </span>
                             <Button
@@ -461,6 +507,7 @@ export default function Purchases() {
           </Dialog.Portal>
         </Dialog.Root>
 
+        {/* Preview Modal (Seller) */}
         <Dialog.Root open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
           <Dialog.Portal>
             <Dialog.Overlay className="fixed inset-0 bg-black/50" />
@@ -494,181 +541,288 @@ export default function Purchases() {
     );
   }
 
-  const [dateRange, setDateRange] = useState<DateRange | undefined>();
-
+  // Vista del administrador
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Gestión de Compras</h1>
-            <p className="text-sm text-gray-500 mt-1">
-              Administra las compras registradas por los vendedores
-            </p>
+      <div className="flex justify-between items-center flex-wrap gap-4">
+        {/* Left side: Title */}
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Gestión de Compras</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Administra las compras registradas por los vendedores
+          </p>
+        </div>
+        {/* Right side: Filter and Export */}
+        <div className="flex items-end gap-2">
+           {/* "Desde" Date Input */}
+           <div className="grid gap-1.5">
+            <Label htmlFor="fromDate">Desde</Label>
+            <Input
+              id="fromDate"
+              type="date"
+              value={fromDate}
+              onChange={(e) => setFromDate(e.target.value)}
+              className="w-auto"
+            />
           </div>
-          <DateRangePicker 
-            onDateChange={(range) => setDateRange(range)}
-            value={dateRange}
+          {/* "Hasta" Date Input */}
+          <div className="grid gap-1.5">
+            <Label htmlFor="toDate">Hasta</Label>
+            <Input
+              id="toDate"
+              type="date"
+              value={toDate}
+              onChange={(e) => setToDate(e.target.value)}
+              className="w-auto"
+            />
+          </div>
+          {/* Filter Button */}
+          <Button onClick={handleFilterClick} disabled={!fromDate || !toDate}>
+            <Filter className="mr-2 h-4 w-4" />
+            Filtrar
+          </Button>
+          <ExportButtons
+            data={dateFilteredPurchases} // Export date-filtered purchases
+            recordsFilename="compras"
+            formatForExcel={formatPurchasesForExcel}
+            dateRange={appliedDateRange} // Pass applied range
           />
         </div>
-        <ExportButtons
-          data={purchases}
-          recordsFilename="compras"
-          formatForExcel={formatPurchasesForExcel}
-          dateRange={dateRange}
-        />
       </div>
 
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Vendedor
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Empresa
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Documento
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Mayorista
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Productos
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Estado
-              </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Acciones
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {purchases
-              .filter(purchase => purchase.status === 'pending')
-              .map((purchase) => (
-                <tr key={purchase.id}>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <img
-                        src={purchase.seller.avatar}
-                        alt={purchase.seller.name}
-                        className="h-8 w-8 rounded-full"
-                      />
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">
-                          {purchase.seller.name}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {purchase.seller.email}
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 responsive-table">
+            <thead className="bg-gray-50">
+              <tr>
+                <th
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Vendedor
+                </th>
+                <th
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Documento
+                </th>
+                <th
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Mayorista
+                </th>
+                <th
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Fecha
+                </th>
+                <th
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Estado
+                </th>
+                <th
+                  className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Puntos
+                </th>
+                <th
+                  className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Acciones
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {/* Map over pendingFilteredPurchases */}
+              {pendingFilteredPurchases.map((purchase) => (
+                  <tr key={purchase.id}>
+                    <td className="px-6 py-4 whitespace-nowrap" data-label="Vendedor">
+                      <div className="flex items-center">
+                        <img
+                          src={purchase.seller.avatar}
+                          alt={purchase.seller.name}
+                          className="h-8 w-8 rounded-full"
+                        />
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">
+                            {purchase.seller.name}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {purchase.seller.email}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
-                      {purchase.seller.store}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      <Button
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap" data-label="Documento">
+                     <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => openPreview(purchase)}
-                        className="flex items-center gap-2"
+                        className="flex items-center gap-2 px-0 text-left"
                       >
                         <Eye className="h-4 w-4" />
-                        Ver
+                        <div>
+                          <div className="text-sm font-medium text-gray-900 capitalize">
+                            {purchase.documentType}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {purchase.documentNumber}
+                          </div>
+                        </div>
                       </Button>
-                      <div>
-                        <div className="text-sm font-medium text-gray-900 capitalize">
-                          {purchase.documentType}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {purchase.documentNumber}
-                        </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap" data-label="Mayorista">
+                      <div className="text-sm text-gray-900">{purchase.wholesaler}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap" data-label="Fecha">
+                      <div className="text-sm text-gray-500">
+                        {new Date(purchase.date).toLocaleDateString('es-ES')} {purchase.time}
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{purchase.wholesaler}</div>
-                    <div className="text-sm text-gray-500">
-                      {new Date(purchase.date).toLocaleDateString('es-ES')} {purchase.time}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900">
-                      {purchase.products.map((product, index) => (
-                        <div key={index}>
-                          {product.quantity}x {product.model}
-                        </div>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      purchase.status === 'approved'
-                        ? 'bg-green-100 text-green-800'
-                        : purchase.status === 'rejected'
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {purchase.status === 'approved' ? 'Aprobada' :
-                       purchase.status === 'rejected' ? 'Rechazada' : 'Pendiente'}
-                    </span>
-                    {purchase.comments && (
-                      <p className="mt-1 text-sm text-gray-500">{purchase.comments}</p>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right">
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap" data-label="Estado">
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          purchase.status === "approved"
+                            ? "bg-green-100 text-green-800"
+                            : purchase.status === "rejected"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-yellow-100 text-yellow-800"
+                        }`}
+                      >
+                        {purchase.status === "approved"
+                          ? "Aprobada"
+                          : purchase.status === "rejected"
+                          ? "Rechazada"
+                          : "Pendiente"}
+                      </span>
+                       {purchase.comments && (
+                        <p className="mt-1 text-sm text-gray-500">{purchase.comments}</p>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-primary" data-label="Puntos">
+                      {purchase.totalPoints} pts
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openReview(purchase)}
+                        className="flex items-center gap-2"
+                      >
+                        Revisar
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+            </table>
+          </div>
+
+        {/* Preview Modal (Admin) */}
+        <Dialog.Root open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+          <Dialog.Portal>
+            <Dialog.Overlay className="fixed inset-0 bg-black/50" />
+            <Dialog.Content className="dialog-content fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl">
+              <Dialog.Title className="text-lg font-semibold mb-4">
+                Vista Previa del Documento
+              </Dialog.Title>
+              {selectedPurchase && (
+                <div className="space-y-4">
+                  <div className="aspect-[16/9] bg-gray-100 rounded-lg overflow-hidden">
+                    <iframe
+                      src={selectedPurchase.document}
+                      className="w-full h-full"
+                      title="Vista previa del documento"
+                    />
+                  </div>
+                  <div className="flex justify-end">
                     <Button
                       variant="outline"
-                      size="sm"
-                      onClick={() => openReview(purchase)}
+                      onClick={() => setIsPreviewOpen(false)}
+                    >
+                      Cerrar
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </Dialog.Content>
+          </Dialog.Portal>
+        </Dialog.Root>
+
+        {/* Review Modal (Admin) */}
+         <Dialog.Root open={isReviewOpen} onOpenChange={setIsReviewOpen}>
+          <Dialog.Portal>
+            <Dialog.Overlay className="fixed inset-0 bg-black/50" />
+            <Dialog.Content className="dialog-content fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+              <Dialog.Title className="text-lg font-semibold mb-4">
+                Revisar Compra
+              </Dialog.Title>
+              {selectedPurchase && (
+                <div className="space-y-4">
+                  <div>
+                    <Label>Vendedor</Label>
+                    <p className="text-sm text-gray-900">{selectedPurchase.seller.name}</p>
+                    <p className="text-sm text-gray-500">{selectedPurchase.seller.store}</p>
+                  </div>
+                  <div>
+                    <Label>Documento</Label>
+                    <p className="text-sm text-gray-900 capitalize">{selectedPurchase.documentType} - {selectedPurchase.documentNumber}</p>
+                  </div>
+                   <div>
+                    <Label>Mayorista</Label>
+                    <p className="text-sm text-gray-900">{selectedPurchase.wholesaler}</p>
+                  </div>
+                  <div>
+                    <Label>Fecha</Label>
+                     <p className="text-sm text-gray-900">
+                      {new Date(selectedPurchase.date).toLocaleDateString('es-ES')} {selectedPurchase.time}
+                    </p>
+                  </div>
+                   <div>
+                    <Label>Productos</Label>
+                     <ul className="list-disc list-inside text-sm text-gray-700">
+                      {selectedPurchase.products.map((p, i) => <li key={i}>{p.quantity}x {p.model} ({p.points} pts)</li>)}
+                    </ul>
+                     <p className="text-sm font-medium text-primary mt-1">Total: {selectedPurchase.totalPoints} pts</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="comments">Comentarios</Label>
+                    <Input
+                      id="comments"
+                      value={reviewData.comments}
+                      onChange={(e) => setReviewData({ ...reviewData, comments: e.target.value })}
+                      placeholder="Agregar comentarios (opcional)..."
+                    />
+                  </div>
+
+                  <div className="pt-4 border-t flex justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setReviewData({ ...reviewData, status: 'rejected' });
+                        handleReview();
+                      }}
                       className="flex items-center gap-2"
                     >
-                      Revisar
+                      <XCircle className="h-4 w-4" /> Rechazar
                     </Button>
-                  </td>
-                </tr>
-              ))}
-          </tbody>
-        </table>
+                    <Button
+                      onClick={() => {
+                        setReviewData({ ...reviewData, status: 'approved' });
+                        handleReview();
+                      }}
+                      className="flex items-center gap-2"
+                    >
+                       <CheckCircle className="h-4 w-4" /> Aprobar
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </Dialog.Content>
+          </Dialog.Portal>
+        </Dialog.Root>
       </div>
-
-      <Dialog.Root open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 bg-black/50" />
-          <Dialog.Content className="dialog-content fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl">
-            <Dialog.Title className="text-lg font-semibold mb-4">
-              Vista Previa del Documento
-            </Dialog.Title>
-            {selectedPurchase && (
-              <div className="space-y-4">
-                <div className="aspect-[16/9] bg-gray-100 rounded-lg overflow-hidden">
-                  <iframe
-                    src={selectedPurchase.document}
-                    className="w-full h-full"
-                    title="Vista previa del documento"
-                  />
-                </div>
-                <div className="flex justify-end">
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsPreviewOpen(false)}
-                  >
-                    Cerrar
-                  </Button>
-                </div>
-              </div>
-            )}
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
     </div>
   );
 }

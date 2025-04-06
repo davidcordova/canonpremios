@@ -1,12 +1,13 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { buttonVariants } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { DayPicker, DateRange } from 'react-day-picker';
 
 interface CalendarProps {
   className?: string;
-  classNames?: any;
+  classNames?: {
+    [key: string]: string;
+  };
   showOutsideDays?: boolean;
   mode?: "range";
   defaultMonth?: Date | undefined;
@@ -14,10 +15,9 @@ interface CalendarProps {
   onSelect?: (date: DateRange | undefined) => void;
   numberOfMonths?: number | undefined;
   pagedNavigation?: boolean | undefined;
-  required?: boolean;
 }
 
-function Calendar({ className, classNames, showOutsideDays = true, mode = "range", defaultMonth, selected, onSelect, numberOfMonths, pagedNavigation, required, ...props }: CalendarProps) {
+function Calendar({ className, classNames, showOutsideDays = true, mode = "range", defaultMonth, selected, onSelect, numberOfMonths, pagedNavigation, ...props }: CalendarProps) {
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
@@ -31,18 +31,21 @@ function Calendar({ className, classNames, showOutsideDays = true, mode = "range
         nav: 'space-x-1 flex items-center',
         nav_button: cn(
           buttonVariants({ variant: 'outline' }),
-          'h-7 w-7 bg-transparent p-0 opacity-50 data-[disabled]:opacity-0'
+          'h-8 w-8 bg-transparent p-0 opacity-50 data-[disabled]:opacity-0' // Increased size h-7 w-7 -> h-8 w-8
         ),
         nav_button_previous: 'absolute left-1',
         nav_button_next: 'absolute right-1',
         table: 'w-full border-collapse space-y-1',
         head_row: 'flex',
-        head_cell: 'text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]',
+        // Set explicit width (1/7th) and ensure text centering
+        head_cell: 'text-muted-foreground rounded-md w-[14.28%] flex justify-center font-normal text-[0.8rem] p-1', 
         row: 'flex w-full mt-2',
-        cell: 'text-center text-sm p-0 relative [&:has([data-selected])]:bg-accent first:[&:has([data-selected])]:rounded-l-md last:[&:has([data-selected])]:rounded-r-md focus-within:relative focus-within:z-20',
+        // Removed [&:has([data-selected])]:bg-accent to clarify selection styles
+        cell: 'text-center text-sm p-0 relative first:[&:has([data-selected])]:rounded-l-md last:[&:has([data-selected])]:rounded-r-md focus-within:relative focus-within:z-20', 
         day: cn(
           buttonVariants({ variant: 'ghost' }),
-          'h-9 w-9 p-0 font-normal aria-selected:opacity-100'
+          // Removed fixed width w-9, let flexbox handle size within cell
+          'h-9 p-0 font-normal aria-selected:opacity-100 flex-1 justify-center' 
         ),
         day_selected:
           'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground',
@@ -60,7 +63,6 @@ function Calendar({ className, classNames, showOutsideDays = true, mode = "range
       onSelect={onSelect}
       numberOfMonths={numberOfMonths}
       pagedNavigation={pagedNavigation}
-      required
       {...props}
     />
   );

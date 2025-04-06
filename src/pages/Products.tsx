@@ -1,14 +1,18 @@
 import { useState } from 'react';
 import { useAuthStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Input } from '@/components/ui/input'; // Keep Input for modals
 import { Label } from '@/components/ui/label';
-import { Plus, Search, Package, Edit, Trash2, AlertCircle } from 'lucide-react';
+import { Plus, Package, Edit, Trash2, AlertCircle, Filter } from 'lucide-react';
 import * as Dialog from '@radix-ui/react-dialog';
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
+// import { DateRangePicker } from '@/components/ui/date-range-picker'; // Removed
+import { DateRange } from 'react-day-picker'; // Keep for appliedDateRange type
 import { ExportButtons } from '@/components/ExportButtons';
 import { formatProductsForExcel } from '@/lib/export';
+// Input is already imported above, removing duplicate
 import { products as mockProducts } from '@/lib/mockData';
+import '../components/responsive-table.css';
 
 interface Product {
   id: string;
@@ -21,9 +25,13 @@ interface Product {
 export default function Products() {
   const user = useAuthStore((state) => state.user);
   const [products, setProducts] = useState<Product[]>(mockProducts);
-  const [searchTerm, setSearchTerm] = useState('');
+  // const [searchTerm, setSearchTerm] = useState(''); // Removed
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  // const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined); // Removed
+  const [fromDate, setFromDate] = useState<string>(''); // Added state for "Desde" date string
+  const [toDate, setToDate] = useState<string>(''); // Added state for "Hasta" date string
+  const [appliedDateRange, setAppliedDateRange] = useState<DateRange | undefined>(undefined); // Keep for export
   const [isEditProductOpen, setIsEditProductOpen] = useState(false);
   const [isNewProductOpen, setIsNewProductOpen] = useState(false);
   const [editProduct, setEditProduct] = useState({
@@ -107,11 +115,28 @@ export default function Products() {
     setSelectedProduct(null);
   };
 
-  const filteredProducts = products.filter(product =>
-    product.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.type.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Removed filteredProducts logic
+
+  const handleFilterClick = () => {
+    // Validate and set the applied date range for export
+    if (fromDate && toDate) {
+      const from = new Date(fromDate);
+      const to = new Date(toDate);
+      // Basic validation: ensure dates are valid and 'from' is not after 'to'
+      if (!isNaN(from.getTime()) && !isNaN(to.getTime()) && from <= to) {
+         // Adjust 'to' date to include the whole day
+         to.setHours(23, 59, 59, 999);
+        setAppliedDateRange({ from, to });
+      } else {
+        // Handle invalid date range selection (e.g., show an error message)
+        console.error("Invalid date range selected"); 
+        setAppliedDateRange(undefined); // Clear applied range on error
+      }
+    } else {
+       setAppliedDateRange(undefined); // Clear if dates are missing
+    }
+    // Note: No filtering is applied to the displayed table data for Products
+  };
 
   return (
     <div className="space-y-6">
@@ -128,26 +153,48 @@ export default function Products() {
         </Button>
       </div>
 
-      <div className="flex justify-between items-center gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+      {/* Filter Section */}
+      <div className="flex flex-wrap items-end gap-4"> {/* Use items-end for alignment */}
+        {/* "Desde" Date Input */}
+        <div className="grid gap-1.5">
+          <Label htmlFor="fromDate">Desde</Label>
           <Input
-            placeholder="Buscar productos..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
+            id="fromDate"
+            type="date"
+            value={fromDate}
+            onChange={(e) => setFromDate(e.target.value)}
+            className="w-auto" // Adjust width as needed
           />
         </div>
+         {/* "Hasta" Date Input */}
+         <div className="grid gap-1.5">
+          <Label htmlFor="toDate">Hasta</Label>
+          <Input
+            id="toDate"
+            type="date"
+            value={toDate}
+            onChange={(e) => setToDate(e.target.value)}
+            className="w-auto" // Adjust width as needed
+          />
+        </div>
+        {/* Filter Button */}
+        <Button onClick={handleFilterClick} disabled={!fromDate || !toDate}>
+          <Filter className="mr-2 h-4 w-4" />
+          Aplicar Filtro (para Exportar)
+        </Button>
+        <div className="flex-grow"></div> {/* Spacer */}
         <ExportButtons
-          data={products}
+          data={products} // Pass original products data
           recordsFilename="productos"
           formatForExcel={formatProductsForExcel}
+          dateRange={appliedDateRange} // Pass applied date range for export filtering
         />
       </div>
 
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
+        <table className="min-w-[1000px] divide-y divide-gray-200 responsive-table">
           <thead className="bg-gray-50">
+            {/* Headers for desktop view, labels handled by data-label in td for mobile */}
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Código
@@ -167,28 +214,29 @@ export default function Products() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredProducts.map((product) => (
+            {/* Map over original products state */}
+            {products.map((product) => (
               <tr key={product.id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-label="Código">
                   {product.code}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-6 py-4 whitespace-nowrap" data-label="Producto">
                   <div className="flex items-center">
                     <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
                       <Package className="h-4 w-4 text-primary" />
                     </div>
                     <div className="ml-4">
                       <div className="text-sm font-medium text-gray-900">{product.model}</div>
-                    </div>
+                    </div>                    
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500" data-label="Tipo">
                   {product.type}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary" data-label="Puntos">
                   {product.points}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium" data-label="Acciones">
                   <div className="flex justify-end gap-2">
                     <Button
                       variant="ghost"
@@ -219,7 +267,7 @@ export default function Products() {
           <Dialog.Content className="dialog-content fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
             <Dialog.Title className="text-lg font-semibold mb-4">
               Nuevo Producto
-            </Dialog.Title>
+            </Dialog.Title>            
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="code">Código</Label>
@@ -275,7 +323,7 @@ export default function Products() {
                   disabled={!newProduct.code || !newProduct.model || !newProduct.type}
                 >
                   Crear Producto
-                </Button>
+                </Button>                
               </div>
             </div>
           </Dialog.Content>
@@ -289,7 +337,7 @@ export default function Products() {
           <Dialog.Content className="dialog-content fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
             <Dialog.Title className="text-lg font-semibold mb-4">
               Editar Producto
-            </Dialog.Title>
+            </Dialog.Title>            
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-code">Código</Label>
@@ -341,7 +389,7 @@ export default function Products() {
                   disabled={!editProduct.code || !editProduct.model || !editProduct.type}
                 >
                   Guardar Cambios
-                </Button>
+                </Button>                
               </div>
             </div>
           </Dialog.Content>
