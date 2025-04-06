@@ -178,6 +178,20 @@ export function formatPurchasesForExcel(purchases: any[], dateRange?: { from?: D
   });
 }
 
+// Function to format Rewards catalog for Excel
+export function formatRewardsForExcel(rewards: any[]) {
+  // No date filtering needed for the catalog itself
+  return rewards.map(reward => ({
+    'ID': reward.id,
+    'Nombre': reward.name,
+    'Descripción': reward.description,
+    'Puntos': reward.points,
+    'Stock': reward.stock,
+    'Categoría': reward.category,
+    'Imagen URL': reward.image // Include image URL if needed
+  }));
+}
+
 export function formatProductsForExcel(products: any[]) {
   return products.map(product => ({
     'Código': product.code,
@@ -233,7 +247,7 @@ export function formatWinnersForExcel(winners: any[], dateRange?: { from?: Date;
       'Empresa': winner.store,
       'Premio': winner.reward.name,
       'Puntos': winner.reward.points.toString(),
-      'Stock': winner.reward.stock,
+      'Stock': winner.reward.stock, // Assuming stock info is part of winner data, adjust if needed
       'Comentarios': winner.review
     };
   });
@@ -360,7 +374,7 @@ export function formatRewardRequestsForExcel(requests: any[], dateRange?: { from
       'Tienda': request.userStore,
       'Premio': request.rewardName,
       'Puntos': request.points,
-      'Stock': request.stock,
+      'Stock': request.stock, // Assuming stock is relevant here, might need adjustment
       'Estado': request.status === 'approved' ? 'Aprobado' : 
                 request.status === 'rejected' ? 'Rechazado' : 'Pendiente',
       'Comentarios': request.comments || '-'

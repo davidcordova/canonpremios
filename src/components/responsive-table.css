@@ -1,28 +1,53 @@
 /* Estilos para tablas responsivas */
-/* Estilos para tablas responsivas */
 .responsive-table {
   width: 100%;
   border-collapse: collapse;
-  /* overflow-x: auto; /* REMOVED - Let media query handle responsiveness */
-  /* min-width: 1000px; /* REMOVED - Let media query handle responsiveness */
 }
 
 @media (max-width: 768px) {
+  /* Ocultar cabecera original */
+  .responsive-table thead {
+    display: none;
+  }
+
+  /* Estilo de fila como tarjeta */
   .responsive-table tr {
     display: block;
     margin-bottom: 1rem;
-    border: 1px solid #e5e7eb;
-    border-radius: 0.375rem;
+    border: 1px solid #e5e7eb; /* Gris 200 */
+    border-radius: 0.375rem; /* rounded-md */
+    overflow: hidden; /* Para mantener bordes redondeados */
   }
-  .responsive-table td {  
-    display: block;
-    width: 100%;
-    padding: 0.5rem 1rem;
+
+  /* Estilo de celda */
+  .responsive-table td {
+    display: block; /* Apila etiqueta y contenido */
+    padding: 0.75rem 1rem; /* py-3 px-4 */
+    border-bottom: 1px solid #f3f4f6; /* Gris 100 - línea separadora */
+    text-align: left; /* Alineación izquierda por defecto */
   }
-   .responsive-table td::before {
-    content: attr(data-label); 
-    font-weight: 600;
-    text-align: left;
-    margin-right: 1rem;
-}
+
+  /* Eliminar borde inferior de la última celda */
+  .responsive-table tr td:last-child {
+    border-bottom: none;
+  }
+
+  /* Estilo y posicionamiento de la etiqueta (cabecera) */
+  .responsive-table td::before {
+    content: attr(data-label); /* Muestra el data-label */
+    display: block; /* Ocupa su propia línea */
+    font-weight: 600; /* font-semibold */
+    margin-bottom: 0.25rem; /* mb-1 - Espacio debajo de la etiqueta */
+    text-transform: uppercase; /* Opcional: si quieres las etiquetas en mayúsculas */
+    font-size: 0.75rem; /* text-xs - Opcional: tamaño más pequeño para etiqueta */
+    color: #6b7280; /* text-gray-500 - Opcional: color diferente para etiqueta */
+  }
+
+  /* Estilos para el contenedor de acciones en móvil */
+  .responsive-table td .actions-container {
+    display: flex; /* Usar flex para alinear botones */
+    gap: 0.5rem; /* Espacio entre botones (gap-2) */
+    justify-content: flex-start; /* Alinear a la izquierda en móvil */
+    margin-top: 0.25rem; /* Espacio opcional debajo de la etiqueta si es necesario */
+  }
 }

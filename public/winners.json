@@ -1,0 +1,106 @@
+[
+  {
+    "id": "winner-2024-01-01",
+    "name": "Isabella Martinez",
+    "avatar": "/avatars/04.jpg",
+    "store": "Servicios Integrales",
+    "photo": "/photos/photo-04.jpg",
+    "reward": {
+      "name": "Tablet",
+      "points": 120,
+      "date": "2024-01-10"
+    },
+    "review": "Muy buen premio."
+  },
+  {
+    "id": "winner-2024-01-02",
+    "name": "Alejandro Vargas",
+    "avatar": "/avatars/05.jpg",
+    "store": "Distribuidora del Centro",
+    "photo": "/photos/photo-05.jpg",
+    "reward": {
+      "name": "Celular",
+      "points": 150,
+      "date": "2024-01-25"
+    },
+    "review": "Estoy muy feliz con mi premio."
+  },
+  {
+    "id": "winner-2024-02-01",
+    "name": "Sofia Ramirez",
+    "avatar": "/avatars/06.jpg",
+    "store": "Comercializadora Oriente",
+    "photo": "/photos/photo-06.jpg",
+    "reward": {
+      "name": "Tablet",
+      "points": 120,
+      "date": "2024-02-12"
+    },
+    "review": "Todo fue muy rapido y el premio genial."
+  },
+  {
+    "id": "winner-2024-02-02",
+    "name": "Mateo Hernandez",
+    "avatar": "/avatars/07.jpg",
+    "store": "Proveedora del Sur",
+    "photo": "/photos/photo-07.jpg",
+    "reward": {
+      "name": "Audifonos",
+      "points": 150,
+      "date": "2024-02-28"
+    },
+    "review": "Gracias por el premio."
+  },
+  {
+    "id": "winner-2024-03-01",
+    "name": "Camila Lopez",
+    "avatar": "/avatars/08.jpg",
+    "store": "Importadora Nueva Era",
+    "photo": "/photos/photo-08.jpg",
+    "reward": {
+      "name": "Tablet",
+      "points": 120,
+      "date": "2024-03-15"
+    },
+    "review": "El mejor programa de premios."
+  },
+  {
+    "id": "winner-2024-03-02",
+    "name": "Santiago Rodriguez",
+    "avatar": "/avatars/09.jpg",
+    "store": "Almacenes del Pacífico",
+    "photo": "/photos/photo-09.jpg",
+    "reward": {
+      "name": "Smartwatch",
+      "points": 150,
+      "date": "2024-03-30"
+    },
+    "review": "Estoy muy feliz."
+  },
+  {
+    "id": "winner-2024-04-01",
+    "name": "Juan Perez",
+    "avatar": "/avatars/01.jpg",
+    "store": "La Proveedora",
+    "photo": "/photos/photo-01.jpg",
+    "reward": {
+      "name": "Tablet",
+      "points": 120,
+      "date": "2024-04-15"
+    },
+    "review": "Excelente servicio y rapidez en la entrega."
+  },
+  {
+    "id": "winner-2024-04-02",
+    "name": "Maria Gomez",
+    "avatar": "/avatars/02.jpg",
+    "store": "Distribuidora del Valle",
+    "photo": "/photos/photo-02.jpg",
+    "reward": {
+      "name": "Audifonos",
+      "points": 150,
+      "date": "2024-04-20"
+    },
+    "review": "Muy satisfecha con mi premio, gracias!"
+  }
+]

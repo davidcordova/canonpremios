@@ -5,28 +5,29 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Trophy,
-  Calendar as CalendarIcon,
-  Star,
-  Plus,
-  Upload,
-  Edit,
-  Trash2,
-  AlertCircle,
-  Filter, // Keep Filter
+  // Calendar as CalendarIcon, // Removed unused
+  Star, // Keep Star
+  Plus, // Keep Plus
+  // Upload, // Removed unused
+  // Edit, // Removed unused
+  // Trash2, // Removed unused
+  // AlertCircle, // Removed unused
+  Filter,
 } from 'lucide-react';
-import * as Dialog from '@radix-ui/react-dialog';
-import * as AlertDialog from '@radix-ui/react-alert-dialog';
+import * as Dialog from '@radix-ui/react-dialog'; // Keep Dialog
+import * as AlertDialog from '@radix-ui/react-alert-dialog'; // Keep AlertDialog
 // import { DateRangePicker } from '@/components/ui/date-range-picker'; // Removed
 import { DateRange } from 'react-day-picker'; // Keep for appliedDateRange type
 import { ExportButtons } from '@/components/ExportButtons';
 import { formatWinnersForExcel } from '@/lib/export';
 // Input is already imported above, removing duplicate
-import { getWinners, Winner } from '@/lib/mockData';
+import { getWinners } from '@/lib/mockData'; // Removed Winner import
 import { format } from 'date-fns';
-// import { useToast } from '@/components/ui/use-toast';
-import { es } from 'date-fns/locale';
+// import { useToast } from '@/components/ui/use-toast'; // Removed
+import { es } from 'date-fns/locale'; // Keep locale
 // import { formatWinnersForExportButtons } from '@/lib/utils'; // Removed
 
+// Keep local Winner interface definition
 interface Winner {
   id: string;
   name: string;
@@ -43,23 +44,21 @@ interface Winner {
 
 export default function Winners() {
   const user = useAuthStore((state) => state.user);
-  const [winners, setWinners] = useState<Winner[]>([]); 
-  // const { toast } = useToast();
+  const [winners, setWinners] = useState<Winner[]>([]);
+  // const { toast } = useToast(); // Removed
   // const [showHistory, setShowHistory] = useState(false); // Removed
 
-  const [fromDate, setFromDate] = useState<string>(''); // Added state for "Desde" date string
-  const [toDate, setToDate] = useState<string>(''); // Added state for "Hasta" date string
-  const [appliedDateRange, setAppliedDateRange] = useState<DateRange | undefined>(); // Keep for filtering/export
+  const [fromDate, setFromDate] = useState<string>('');
+  const [toDate, setToDate] = useState<string>('');
+  const [appliedDateRange, setAppliedDateRange] = useState<DateRange | undefined>();
 
   // Removed old filtering/grouping logic (currentMonth, currentYear, currentMonthWinners, historicalWinners)
 
-  const handleFilterClick = () => { // Updated
-    // Validate and set the applied date range
+  const handleFilterClick = () => {
     if (fromDate && toDate) {
       const from = new Date(fromDate);
       const to = new Date(toDate);
       if (!isNaN(from.getTime()) && !isNaN(to.getTime()) && from <= to) {
-        // Adjust 'to' date to include the whole day
         to.setHours(23, 59, 59, 999);
         setAppliedDateRange({ from, to });
       } else {
@@ -71,28 +70,29 @@ export default function Winners() {
     }
   };
 
-  const filteredWinners = winners.filter(winner => { // Updated filter logic
+  const filteredWinners = winners.filter(winner => {
     if (!appliedDateRange?.from || !appliedDateRange?.to) {
       return true; // No filter applied yet or incomplete range
     }
     const winnerDate = new Date(winner.reward.date);
-    // Normalize dates to compare day only
-    const normalizedWinnerDate = new Date(winnerDate.getFullYear(), winnerDate.getMonth(), winnerDate.getDate());
-    const normalizedFrom = new Date(appliedDateRange.from.getFullYear(), appliedDateRange.from.getMonth(), appliedDateRange.from.getDate());
-    const normalizedTo = new Date(appliedDateRange.to.getFullYear(), appliedDateRange.to.getMonth(), appliedDateRange.to.getDate());
-
-    return normalizedWinnerDate >= normalizedFrom && normalizedWinnerDate <= normalizedTo;
+    // Compare directly with the range, handleFilterClick already sets 'to' date to end of day
+    return winnerDate >= appliedDateRange.from && winnerDate <= appliedDateRange.to;
   });
 
   useEffect(() => {
     const fetchWinners = async () => {
-      const fetchedWinners = await getWinners()
-      setWinners(fetchedWinners);
+      try {
+        const fetchedWinners = await getWinners(); // Ensure await is used
+        setWinners(fetchedWinners);
+      } catch (error) {
+        console.error("Error fetching winners:", error);
+        // Optionally: set an error state here to display a message to the user
+      }
     };
     fetchWinners();
-  });
+  }, []); // Added empty dependency array
 
-  return ( 
+  return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <div>
@@ -105,8 +105,7 @@ export default function Winners() {
         </div>
         {/* Admin Filter/Export Section */}
         {user?.role === 'admin' && (
-          <div className="flex items-end gap-2"> {/* Use items-end */}
-            {/* "Desde" Date Input */}
+          <div className="flex items-end gap-2">
             <div className="grid gap-1.5">
               <Label htmlFor="fromDate">Desde</Label>
               <Input
@@ -117,7 +116,6 @@ export default function Winners() {
                 className="w-auto"
               />
             </div>
-            {/* "Hasta" Date Input */}
             <div className="grid gap-1.5">
               <Label htmlFor="toDate">Hasta</Label>
               <Input
@@ -128,20 +126,19 @@ export default function Winners() {
                 className="w-auto"
               />
             </div>
-            {/* Filter Button */}
             <Button onClick={handleFilterClick} disabled={!fromDate || !toDate}>
               <Filter className="mr-2 h-4 w-4" />
               Filtrar
             </Button>
             <ExportButtons
-              data={filteredWinners} // Pass filtered data
+              data={filteredWinners}
               recordsFilename="ganadores"
               formatForExcel={formatWinnersForExcel}
-              dateRange={appliedDateRange} // Pass applied range
+              dateRange={appliedDateRange}
             />
           </div>
         )}
-        {/* Admin "Nuevo Ganador" Button - Kept separate for layout */}
+        {/* Admin "Nuevo Ganador" Button */}
         {user?.role === 'admin' && (
           <Dialog.Root>
             <Dialog.Trigger asChild>
@@ -160,6 +157,7 @@ export default function Winners() {
                   Registra los datos del nuevo ganador.
                 </Dialog.Description>
                 <div className="mt-6 space-y-4">
+                  {/* Form fields... */}
                   <div className="grid w-full items-center gap-4">
                     <Label htmlFor="code">Nombre</Label>
                     <Input id="code" type="text" />
@@ -200,15 +198,7 @@ export default function Winners() {
                     </Button>
                   </Dialog.Close>
                   <Dialog.Close asChild>
-                    <Button
-                      type="button"
-                      // onClick={() => {
-                      //   toast({
-                      //     title: 'Ganador creado',
-                      //     description: 'Se ha registrado al ganador correctamente',
-                      //   });
-                      // }}
-                    >
+                    <Button type="button"> {/* Removed commented onClick */}
                       Guardar
                     </Button>
                   </Dialog.Close>
@@ -221,8 +211,7 @@ export default function Winners() {
 
       {/* Combined Winners Section */}
       <div className="space-y-4">
-        {/* Removed specific month header */}
-        {filteredWinners.length === 0 ? ( // Check filtered winners
+        {filteredWinners.length === 0 ? (
           <div className="bg-gray-50 rounded-lg p-8 text-center">
             <Trophy className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-600">No hay ganadores registrados para el filtro seleccionado.</p>
@@ -230,8 +219,8 @@ export default function Winners() {
         ) : (
           <div className="responsive-table overflow-x-auto">
             <table className="min-w-full">
-              {/* Added thead for structure, though visually similar */}
-              <thead className="sr-only"> {/* Hide visually but keep for structure/accessibility */}
+              {/* Keep thead outside the conditional check */}
+              <thead className="sr-only">
                 <tr>
                   <th>Detalles Ganador</th>
                   <th>Tienda</th>
@@ -239,11 +228,11 @@ export default function Winners() {
                   <th>Puntos</th>
                 </tr>
               </thead>
+              {/* Conditionally render tbody content */}
               <tbody>
-                {/* Map over filtered winners */}
                 {filteredWinners.map((winner) => (
-                  <tr key={winner.id} className="border-b last:border-b-0"> {/* Added border */}
-                    <td className="px-6 py-4 whitespace-nowrap align-top" data-label="Ganador"> {/* Added align-top */}
+                  <tr key={winner.id} className="border-b last:border-b-0">
+                    <td className="px-6 py-4 whitespace-nowrap align-top" data-label="Ganador">
                       <div className="relative w-[300px] h-[200px]">
                         <img
                           src={winner.photo}
@@ -273,17 +262,16 @@ export default function Winners() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap align-top" data-label="Tienda"> {/* Added align-top */}
+                    <td className="px-6 py-4 whitespace-nowrap align-top" data-label="Tienda">
                       {winner.store}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap align-top" data-label="Premio"> {/* Added align-top */}
+                    <td className="px-6 py-4 whitespace-nowrap align-top" data-label="Premio">
                       {winner.reward.name}
-                      {/* Display date */}
                       <div className="text-xs text-gray-500 mt-1">
                         {format(new Date(winner.reward.date), 'dd MMM yyyy', { locale: es })}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap align-top" data-label="Puntos"> {/* Added align-top */}
+                    <td className="px-6 py-4 whitespace-nowrap align-top" data-label="Puntos">
                       <span className="flex items-center gap-1">
                         <Star className="h-4 w-4" />
                         {winner.reward.points} pts
@@ -301,5 +289,3 @@ export default function Winners() {
     </div>
   );
 }
-
-

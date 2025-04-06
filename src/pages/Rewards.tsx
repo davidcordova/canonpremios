@@ -3,14 +3,14 @@ import { useAuthStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Gift, Calendar as CalendarIcon, Star, Plus, Upload, Edit, Trash2, AlertCircle, ImageIcon, Filter } from 'lucide-react';
+import { DialogDescription } from '@radix-ui/react-dialog';
+import { Gift, Star, Plus, Edit, Trash2, AlertCircle, ImageIcon } from 'lucide-react'; // Removed Filter, CalendarIcon, Upload
 import * as Dialog from '@radix-ui/react-dialog';
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
-// import { DateRangePicker } from '@/components/ui/date-range-picker'; // Removed
-import { DateRange } from 'react-day-picker'; // Keep for appliedDateRange type
+// Removed DateRange import
 import { ExportButtons } from '@/components/ExportButtons';
-import { formatRewardRequestsForExcel } from '@/lib/export';
-// Input is already imported above, removing duplicate
+// Import both formatters
+import { formatRewardRequestsForExcel, formatRewardsForExcel } from '@/lib/export'; 
 
 interface Reward {
   id: string;
@@ -30,7 +30,7 @@ interface RewardRequest {
   rewardId: string;
   rewardName: string;
   points: number;
-  stock: number;
+  stock: number; // Stock requested (usually 1)
   requestDate: string;
   status: 'pending' | 'approved' | 'rejected';
   comments?: string;
@@ -121,10 +121,7 @@ export default function Rewards() {
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'tecnología' | 'vales' | 'merchandising'>('all');
   const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
-  // const [dateRange, setDateRange] = useState<DateRange | undefined>(); // Removed
-  const [fromDate, setFromDate] = useState<string>(''); // Added state for "Desde" date string
-  const [toDate, setToDate] = useState<string>(''); // Added state for "Hasta" date string
-  const [appliedDateRange, setAppliedDateRange] = useState<DateRange | undefined>(); // Keep for filtering/export
+  // Removed date filter states
   const [isNewRewardOpen, setIsNewRewardOpen] = useState(false);
   const [isEditRewardOpen, setIsEditRewardOpen] = useState(false);
   const [isDeleteRewardOpen, setIsDeleteRewardOpen] = useState(false);
@@ -155,7 +152,7 @@ export default function Rewards() {
       rewardId: reward.id,
       rewardName: reward.name,
       points: reward.points,
-      stock: 1,
+      stock: 1, // Assuming requesting 1 item
       requestDate: new Date().toISOString().split('T')[0],
       status: 'pending'
     };
@@ -280,42 +277,14 @@ export default function Rewards() {
     selectedCategory === 'all' || reward.category === selectedCategory
   );
 
-  const handleFilterClick = () => { // Updated
-    // Validate and set the applied date range
-    if (fromDate && toDate) {
-      const from = new Date(fromDate);
-      const to = new Date(toDate);
-      if (!isNaN(from.getTime()) && !isNaN(to.getTime()) && from <= to) {
-        // Adjust 'to' date to include the whole day
-        to.setHours(23, 59, 59, 999);
-        setAppliedDateRange({ from, to });
-      } else {
-        console.error("Invalid date range selected");
-        setAppliedDateRange(undefined);
-      }
-    } else {
-      setAppliedDateRange(undefined);
-    }
-  };
+  // Removed handleFilterClick function
+  // Removed dateFilteredRequests variable
 
-  // Filter requests by date first for export and display
-  const dateFilteredRequests = requests.filter(request => { // Added
-    if (!appliedDateRange?.from || !appliedDateRange?.to) {
-      return true; // No filter applied yet or incomplete range
-    }
-    const requestDate = new Date(request.requestDate);
-    // Normalize dates to compare day only
-    const normalizedRequestDate = new Date(requestDate.getFullYear(), requestDate.getMonth(), requestDate.getDate());
-    const normalizedFrom = new Date(appliedDateRange.from.getFullYear(), appliedDateRange.from.getMonth(), appliedDateRange.from.getDate());
-    const normalizedTo = new Date(appliedDateRange.to.getFullYear(), appliedDateRange.to.getMonth(), appliedDateRange.to.getDate());
-
-    return normalizedRequestDate >= normalizedFrom && normalizedRequestDate <= normalizedTo;
-  });
-
-  // Further filter by status === 'pending' only for the table display
-  const pendingFilteredRequests = dateFilteredRequests.filter(request => request.status === 'pending'); // Added
+  // Filter pending requests directly from all requests
+  const pendingRequests = requests.filter(request => request.status === 'pending'); 
 
   if (user?.role === 'seller') {
+    // --- Seller View ---
     return (
       <div className="space-y-6">
         <div>
@@ -395,11 +364,11 @@ export default function Rewards() {
           ))}
         </div>
 
-        {/* Historial de solicitudes */}
+        {/* Historial de solicitudes (Seller view) */}
         <div className="mt-8">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Mis Solicitudes</h2>
           <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
+            <table className="min-w-full divide-y divide-gray-200 responsive-table">
               <thead className="bg-gray-50">
                 <tr>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -413,9 +382,6 @@ export default function Rewards() {
                   </th>
                   <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Puntos
-                  </th>
-                  <th scope="col" className="relative py-3 pl-3 pr-4 sm:pr-6">
-                    <span className="sr-only">Puntos</span>
                   </th>
                 </tr>
               </thead>
@@ -432,7 +398,7 @@ export default function Rewards() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500" data-label="Fecha">
                         {new Date(request.requestDate).toLocaleDateString('es-ES')}
                       </td>  
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap" data-label="Estado">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                           request.status === 'approved'
                             ? 'bg-green-100 text-green-800'
@@ -467,6 +433,9 @@ export default function Rewards() {
               <Dialog.Title className="text-lg font-semibold mb-4">
                 Confirmar Canje de Premio
               </Dialog.Title>
+              <DialogDescription className="text-sm text-gray-500 mb-4">
+                Confirma el canje del premio seleccionado. Revisa los puntos disponibles y los requeridos para realizar la operación.
+              </DialogDescription>
               {selectedReward && (
                 <div className="space-y-4">
                   <div className="aspect-video rounded-lg overflow-hidden">
@@ -522,6 +491,7 @@ export default function Rewards() {
     );
   }
 
+  // --- Admin View ---
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -532,12 +502,7 @@ export default function Rewards() {
           </p>
         </div>
         <div className="flex gap-2">
-          <ExportButtons
-            data={dateFilteredRequests} // Export date-filtered requests (all statuses)
-            recordsFilename="solicitudes-premios"
-            formatForExcel={formatRewardRequestsForExcel}
-            dateRange={appliedDateRange} // Pass applied range
-          />
+          {/* ExportButtons removed from here */}
           <Button onClick={() => setIsNewRewardOpen(true)} className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
             Nuevo Premio
@@ -547,7 +512,16 @@ export default function Rewards() {
 
       {/* Catálogo de Premios */}
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold text-gray-900">Catálogo de Premios</h2>
+        <div className="flex justify-between items-center flex-wrap gap-4"> {/* Wrap title and buttons */}
+          <h2 className="text-xl font-semibold text-gray-900">Catálogo de Premios</h2>
+          {/* Moved ExportButtons here */}
+          <ExportButtons
+            data={filteredRewards} // Export rewards filtered by category
+            recordsFilename="catalogo-premios" // Updated filename
+            formatForExcel={formatRewardsForExcel} // Use the new formatter
+            // dateRange prop is removed as it's not needed
+          />
+        </div>
         
         <div className="flex gap-2">
           <Button
@@ -633,118 +607,144 @@ export default function Rewards() {
 
       {/* Solicitudes Pendientes */}
       <div className="space-y-4">
-        <div className="flex justify-between items-center flex-wrap gap-4">
-          <h2 className="text-xl font-semibold text-gray-900">Solicitudes Pendientes</h2>
-          {/* Filter controls for Requests */}
-          <div className="flex items-end gap-2"> {/* Use items-end */}
-             {/* "Desde" Date Input */}
-             <div className="grid gap-1.5">
-              <Label htmlFor="fromDate">Desde</Label>
-              <Input
-                id="fromDate"
-                type="date"
-                value={fromDate}
-                onChange={(e) => setFromDate(e.target.value)}
-                className="w-auto"
-              />
-            </div>
-            {/* "Hasta" Date Input */}
-            <div className="grid gap-1.5">
-              <Label htmlFor="toDate">Hasta</Label>
-              <Input
-                id="toDate"
-                type="date"
-                value={toDate}
-                onChange={(e) => setToDate(e.target.value)}
-                className="w-auto"
-              />
-            </div>
-            {/* Filter Button */}
-            <Button onClick={handleFilterClick} disabled={!fromDate || !toDate}>
-              <Filter className="mr-2 h-4 w-4" />
-              Filtrar Solicitudes
-            </Button>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200 responsive-table"> {/* Added responsive-table class */}
+        {/* Removed filter controls from here */}
+        <h2 className="text-xl font-semibold text-gray-900">Solicitudes Pendientes</h2>
+        
+        {/* Table for Pending Requests (uses pendingRequests) */}
+        <table className="bg-white rounded-lg shadow-sm overflow-hidden min-w-full divide-y divide-gray-200 responsive-table">
+            {/* ... thead and tbody for pending requests ... */}
             <thead className="bg-gray-50">
-              <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Vendedor
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Premio
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Fecha
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Estado
-                </th>
-                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Acciones
-                </th>
-                <th scope="col" className="relative py-3 pl-3 pr-4 sm:pr-6">
-                    <span className="sr-only">Actions</span>
-                  </th>
+              <tr><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Vendedor</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Premio</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Fecha</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Estado</th><th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Acciones</th><th scope="col" className="relative py-3 pl-3 pr-4 sm:pr-6">
+                    <span className="sr-only">Actions</span></th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {/* Map over pendingFilteredRequests */}
-              {pendingFilteredRequests.map((request) => (
-                  <tr key={request.id}>
-                    <td className="px-6 py-4 whitespace-nowrap" data-label="Vendedor">
-                      <div className="text-sm font-medium text-gray-900">
-                        {request.userName}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {request.userStore}
-                      </div>
-                    </td> 
-                    <td className="px-6 py-4 whitespace-nowrap" data-label="Premio">
-                      <div className="text-sm font-medium text-gray-900">
-                        {request.rewardName}
-                      </div>
-                      <div className="text-sm text-primary">
-                        {request.points} pts
-                      </div>
-                    </td>   
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(request.requestDate).toLocaleDateString('es-ES')}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        request.status === 'approved'
-                          ? 'bg-green-100 text-green-800'
-                          : request.status === 'rejected'
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {request.status === 'approved' ? 'Aprobado' :
-                         request.status === 'rejected' ? 'Rechazado' : 'Pendiente'}
-                      </span>
-                      {request.comments && (
-                        <p className="mt-1 text-sm text-gray-500">{request.comments}</p>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openReviewDialog(request)}
-                        className="flex items-center gap-2"
-                      >
-                        Revisar
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
+              {/* Map over pendingRequests */}
+              {pendingRequests.length === 0 ? (
+                <tr><td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">No hay solicitudes pendientes.</td></tr>
+              ) : (
+                pendingRequests.map((request) => (
+                    <tr key={request.id}>
+                      <td className="px-6 py-4 whitespace-nowrap" data-label="Vendedor">
+                        <div className="text-sm font-medium text-gray-900">
+                          {request.userName}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {request.userStore}
+                        </div>
+                      </td> 
+                      <td className="px-6 py-4 whitespace-nowrap" data-label="Premio">
+                        <div className="text-sm font-medium text-gray-900">
+                          {request.rewardName}
+                        </div>
+                        <div className="text-sm text-primary">
+                          {request.points} pts
+                        </div>
+                      </td>   
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(request.requestDate).toLocaleDateString('es-ES')}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          request.status === 'approved'
+                            ? 'bg-green-100 text-green-800'
+                            : request.status === 'rejected'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {request.status === 'approved' ? 'Aprobado' :
+                           request.status === 'rejected' ? 'Rechazado' : 'Pendiente'}
+                        </span>
+                        {request.comments && (
+                          <p className="mt-1 text-sm text-gray-500">{request.comments}</p>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openReviewDialog(request)}
+                          className="flex items-center gap-2"
+                        >
+                          Revisar
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+              )}
             </tbody>
-          </table>
-        </div>
+        </table>
       </div>
+
+      {/* Historial de Solicitudes */}
+      <div className="space-y-4 pt-8"> {/* Added padding-top */}
+        <h2 className="text-xl font-semibold text-gray-900">Historial de Solicitudes</h2>
+        {/* Removed filter controls and export buttons from here */}
+
+        {/* Table for History (uses all requests) */}
+        <table className="bg-white rounded-lg shadow-sm overflow-hidden min-w-full divide-y divide-gray-200 responsive-table">
+            <thead className="bg-gray-50">
+              <tr><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Vendedor</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Premio</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Fecha</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Estado</th><th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Comentarios</th> {/* Added Comments column */}
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {/* Map over all requests */}
+              {requests.length === 0 ? (
+                 <tr><td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">No hay solicitudes en el historial.</td></tr>
+              ) : (
+                requests.map((request) => (
+                    <tr key={request.id}>
+                      <td className="px-6 py-4 whitespace-nowrap" data-label="Vendedor">
+                        <div className="text-sm font-medium text-gray-900">
+                          {request.userName}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {request.userStore}
+                        </div>
+                      </td> 
+                      <td className="px-6 py-4 whitespace-nowrap" data-label="Premio">
+                        <div className="text-sm font-medium text-gray-900">
+                          {request.rewardName}
+                        </div>
+                        <div className="text-sm text-primary">
+                          {request.points} pts
+                        </div>
+                      </td>   
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(request.requestDate).toLocaleDateString('es-ES')}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          request.status === 'approved'
+                            ? 'bg-green-100 text-green-800'
+                            : request.status === 'rejected'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {request.status === 'approved' ? 'Aprobado' :
+                           request.status === 'rejected' ? 'Rechazado' : 'Pendiente'}
+                        </span>
+                      </td>
+                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500" data-label="Comentarios">
+                        {request.comments || '-'} {/* Display comments or dash */}
+                      </td>
+                    </tr>
+                  ))
+              )}
+            </tbody>
+        </table>
+      </div>
+
 
       {/* Modal para nuevo premio */}
       <Dialog.Root open={isNewRewardOpen} onOpenChange={setIsNewRewardOpen}>
@@ -754,6 +754,9 @@ export default function Rewards() {
             <Dialog.Title className="text-lg font-semibold mb-4">
               Nuevo Premio
             </Dialog.Title>
+            <DialogDescription className="text-sm text-gray-500 mb-4">
+              Ingresa los datos del nuevo premio para agregarlo al catálogo.
+            </DialogDescription>
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Nombre del Premio</Label>
@@ -853,6 +856,9 @@ export default function Rewards() {
             <Dialog.Title className="text-lg font-semibold mb-4">
               Editar Premio
             </Dialog.Title>
+            <DialogDescription className="text-sm text-gray-500 mb-4">
+              Edita los datos del premio seleccionado para actualizar el catálogo.
+            </DialogDescription>
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-name">Nombre del Premio</Label>
@@ -969,6 +975,9 @@ export default function Rewards() {
             <Dialog.Title className="text-lg font-semibold mb-4">
               Revisar Solicitud de Premio
             </Dialog.Title>
+             <DialogDescription className="text-sm text-gray-500 mb-4">
+              Revisa la solicitud de premio seleccionada y decide si la apruebas o la rechazas.
+            </DialogDescription>
             {selectedRequest && (
               <div className="space-y-4">
                 <div>

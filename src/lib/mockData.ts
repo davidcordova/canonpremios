@@ -1,4 +1,4 @@
-import { format, subDays, getWeek, startOfWeek, endOfWeek } from 'date-fns';
+import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 // Datos de ejemplo para vendedores
@@ -281,6 +281,18 @@ export const generateMockPurchases = () => {
   });
 
   return purchases.sort((a, b) => b.date.localeCompare(a.date));
+};
+
+
+export const getWinners = async () => {
+  try {
+    const response = await fetch('/winners.json')
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error al cargar los ganadores:', error);
+    return [];
+  }
 };
 
 // Generar ganadores de ejemplo

@@ -153,43 +153,17 @@ export default function Products() {
         </Button>
       </div>
 
-      {/* Filter Section */}
-      <div className="flex flex-wrap items-end gap-4"> {/* Use items-end for alignment */}
-        {/* "Desde" Date Input */}
-        <div className="grid gap-1.5">
-          <Label htmlFor="fromDate">Desde</Label>
-          <Input
-            id="fromDate"
-            type="date"
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
-            className="w-auto" // Adjust width as needed
-          />
-        </div>
-         {/* "Hasta" Date Input */}
-         <div className="grid gap-1.5">
-          <Label htmlFor="toDate">Hasta</Label>
-          <Input
-            id="toDate"
-            type="date"
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
-            className="w-auto" // Adjust width as needed
-          />
-        </div>
-        {/* Filter Button */}
-        <Button onClick={handleFilterClick} disabled={!fromDate || !toDate}>
-          <Filter className="mr-2 h-4 w-4" />
-          Aplicar Filtro (para Exportar)
-        </Button>
-        <div className="flex-grow"></div> {/* Spacer */}
-        <ExportButtons
-          data={products} // Pass original products data
+      {/* Removed Filter Section */}
+      {/* Add ExportButtons here if needed, or adjust layout */}
+      <div className="flex justify-end"> {/* Simple container for ExportButtons */}
+         <ExportButtons
+          data={products} 
           recordsFilename="productos"
           formatForExcel={formatProductsForExcel}
-          dateRange={appliedDateRange} // Pass applied date range for export filtering
+          dateRange={undefined} // Pass undefined as date range is removed
         />
       </div>
+
 
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
         <table className="min-w-[1000px] divide-y divide-gray-200 responsive-table">
@@ -236,8 +210,10 @@ export default function Products() {
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary" data-label="Puntos">
                   {product.points}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium" data-label="Acciones">
-                  <div className="flex justify-end gap-2">
+                {/* Removed text-right from td */}
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium" data-label="Acciones">
+                   {/* Remove Tailwind layout classes, add simple class for CSS targeting */}
+                  <div className="actions-container"> 
                     <Button
                       variant="ghost"
                       size="sm"

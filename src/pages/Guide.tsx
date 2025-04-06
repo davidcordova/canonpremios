@@ -271,14 +271,8 @@ export default function Guide() {
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${difficultyColors[guide.difficulty]}`}>
                         {difficultyNames[guide.difficulty]}
                       </span>
-                      <span className="flex items-center gap-1 text-sm text-gray-500">
-                        <Star className="h-4 w-4" />
-                        {guide.likes} likes
-                      </span>
-                      <span className="flex items-center gap-1 text-sm text-gray-500">
-                        <MessageCircle className="h-4 w-4" />
-                        {guide.views} vistas
-                      </span>
+                      {/* Removed Likes Span */}
+                      {/* Removed Views Span */}
                     </div>
                   </div>
                 </div>

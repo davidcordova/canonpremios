@@ -234,7 +234,8 @@ export default function Documentation() {
         />
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+      {/* Wrap the table in a div with overflow-x-auto for horizontal scrolling on small screens */}
+      <div className="bg-white rounded-lg shadow-sm overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
