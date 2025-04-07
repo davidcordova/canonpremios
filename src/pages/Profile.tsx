@@ -111,9 +111,11 @@ export default function Profile() {
     <div className="max-w-4xl mx-auto">
       <div className="bg-white rounded-lg shadow-sm">
         <div className="p-6">
-          <div className="flex justify-between items-center mb-6">
+          {/* Make header flex column on small screens, row on medium+ */}
+          <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6">
             <h1 className="text-2xl font-bold text-gray-900">Perfil de Usuario</h1>
-            <div className="flex gap-2">
+            {/* Make button group flex column on small screens, row on medium+ */}
+            <div className="flex flex-col sm:flex-row gap-2">
               {isEditing ? (
                 <Button
                   variant="outline"
@@ -145,12 +147,14 @@ export default function Profile() {
             </div>
           </div>
 
-          <div className="flex items-center gap-6 mb-8">
+          {/* Make avatar/name section stack vertically on small screens */}
+          <div className="flex flex-col sm:flex-row items-center gap-6 mb-8">
             <div className="relative">
               <img
                 src={user?.avatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'}
                 alt="Profile"
-                className={`w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg ${isEditing ? 'cursor-pointer' : ''}`}
+                /* Smaller avatar on mobile, larger on sm+ */
+                className={`w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover border-4 border-white shadow-lg ${isEditing ? 'cursor-pointer' : ''}`}
                 onClick={handleAvatarClick}
               />
               {isEditing && (
@@ -164,10 +168,12 @@ export default function Profile() {
               )}
             </div>
 
-            <div>
+            {/* Center text on mobile when stacked, left-align on sm+ */}
+            <div className="text-center sm:text-left">
               <h2 className="text-2xl font-bold text-gray-900">{profile.name}</h2>
               <p className="text-gray-500">{profile.position}</p>
-              <div className="mt-2 flex items-center gap-2">
+              {/* Center badges on mobile */}
+              <div className="mt-2 flex flex-col sm:flex-row items-center sm:items-start justify-center sm:justify-start gap-2">
                 <span className="px-3 py-1 rounded-full text-sm font-medium bg-primary/10 text-primary">
                   {user?.role === 'admin' ? 'Administrador' : 'Vendedor'}
                 </span>
@@ -296,12 +302,13 @@ export default function Profile() {
                 {[
                   { id: 1, type: 'purchase', description: 'Compra de Canon G3160', date: '15 Mar 2024' },
                   { id: 2, type: 'sale', description: 'Venta de Canon Maxifi GX7010', date: '14 Mar 2024' },
-                  { id: 3, type: 'training', description: 'Capacitación de Productos', date: '13 Mar 2024' },
-                ].map((activity) => (
-                  <div key={activity.id} className="flex items-center justify-between border-b pb-4">
-                    <div>
-                      <p className="font-medium text-gray-900">{activity.description}</p>
-                      <p className="text-sm text-gray-500">{activity.date}</p>
+                   { id: 3, type: 'training', description: 'Capacitación de Productos', date: '13 Mar 2024' },
+                 ].map((activity) => (
+                   /* Stack activity details vertically on small screens */
+                   <div key={activity.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b pb-4 gap-1 sm:gap-4">
+                     <div>
+                       <p className="font-medium text-gray-900">{activity.description}</p>
+                       <p className="text-sm text-gray-500">{activity.date}</p>
                     </div>
                   </div>
                 ))}
