@@ -165,7 +165,7 @@ export default function Companies() {
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Razón Social</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CUIT</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">RUC</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dirección</th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Acciones
@@ -186,9 +186,6 @@ export default function Companies() {
           <tbody className="bg-white divide-y divide-gray-200">
             {filteredCompanies.map((company) => (
               <tr key={company.id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {company.ruc}
-                </td>  
                 <td className="px-6 py-4 whitespace-nowrap" data-label="Name">
                   <div className="flex items-center">
                     <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
@@ -199,6 +196,9 @@ export default function Companies() {
                     </div>
                   </div>
                 </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {company.ruc}
+                </td>  
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center gap-2 text-sm text-gray-900">
                   <MapPin className="h-4 w-4 text-gray-400"/>
