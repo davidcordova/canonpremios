@@ -101,11 +101,35 @@ export const companies = [
   }
 ];
 
+// Define rewards outside and export it
+export const rewards = [
+  {
+    name: 'iPad Pro 11"',
+    points: 5000,
+    category: 'tecnología'
+  },
+  {
+    name: 'Vale de Compra S/500',
+    points: 2000,
+    category: 'vales'
+  },
+  {
+    name: 'Smartwatch Galaxy Watch 6',
+    points: 3500,
+    category: 'tecnología'
+  },
+  {
+    name: 'Pack de Merchandising Premium',
+    points: 1500,
+    category: 'merchandising'
+  }
+];
+
 // Generar registros de stock de ejemplo
 export const generateMockStockRecords = () => {
-  const records = [];
+  const records: any[] = []; // Add explicit type
   const currentDate = new Date();
-  
+
   // Generar registros para cada vendedor
   sellers.forEach(seller => {
     // Generar entre 3 y 7 registros por vendedor
@@ -169,9 +193,9 @@ export const generateMockStockRecords = () => {
 
 // Generar ventas de ejemplo
 export const generateMockSales = () => {
-  const sales = [];
+  const sales: any[] = []; // Add explicit type
   const currentDate = new Date();
-  
+
   // Generar ventas para cada vendedor
   sellers.forEach(seller => {
     // Generar entre 5 y 10 ventas por vendedor
@@ -229,9 +253,9 @@ export const generateMockSales = () => {
 
 // Generar compras de ejemplo
 export const generateMockPurchases = () => {
-  const purchases = [];
+  const purchases: any[] = []; // Add explicit type
   const currentDate = new Date();
-  
+
   // Generar compras para cada vendedor
   sellers.forEach(seller => {
     // Generar entre 3 y 7 compras por vendedor
@@ -297,43 +321,23 @@ export const getWinners = async () => {
 
 // Generar ganadores de ejemplo
 export const generateMockWinners = () => {
-  const winners = [];
+  const winners: any[] = []; // Add explicit type
   const currentDate = new Date();
-  
-  const rewards = [
-    {
-      name: 'iPad Pro 11"',
-      points: 5000,
-      category: 'tecnología'
-    },
-    {
-      name: 'Vale de Compra S/500',
-      points: 2000,
-      category: 'vales'
-    },
-    {
-      name: 'Smartwatch Galaxy Watch 6',
-      points: 3500,
-      category: 'tecnología'
-    },
-    {
-      name: 'Pack de Merchandising Premium',
-      points: 1500,
-      category: 'merchandising'
-    }
-  ];
+
+  // Use the exported rewards array defined above
+  // const rewards = [ ... ]; // This was removed correctly
 
   // Generar ganadores para cada vendedor
   sellers.forEach(seller => {
     // Generar entre 1 y 3 premios por vendedor
     const numWins = Math.floor(Math.random() * 3) + 1;
-    
+
     for (let i = 0; i < numWins; i++) {
       const date = new Date(currentDate);
       date.setDate(date.getDate() - Math.floor(Math.random() * 30));
-      
-      const reward = rewards[Math.floor(Math.random() * rewards.length)];
-      
+
+      const reward = rewards[Math.floor(Math.random() * rewards.length)]; // Use exported rewards
+
       const winner = {
         id: `${seller.id}-${i + 1}`,
         name: seller.name,
@@ -358,12 +362,13 @@ export const generateMockWinners = () => {
   return winners.sort((a, b) => b.reward.date.localeCompare(a.reward.date));
 };
 
+
 // Generar capacitaciones de ejemplo
 export const generateMockTrainings = () => {
-  const trainings = [];
-  const currentDate = new Date();
-  
-  const topics = [
+  const trainings: any[] = []; // Add explicit type
+  const currentDate = new Date(); // Keep currentDate definition here
+
+  const topics = [ // Keep topics definition here
     'Capacitación PIXMA Series 2024',
     'Capacitación Maxify GX Series',
     'Técnicas de Venta Avanzadas',

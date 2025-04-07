@@ -5,18 +5,21 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Trophy,
-  Star, 
-  Plus, 
+  Star,
+  Plus,
   Filter,
+  Edit, // Add Edit icon
+  Trash2, // Add Trash icon
 } from 'lucide-react';
-import * as Dialog from '@radix-ui/react-dialog'; 
-import * as AlertDialog from '@radix-ui/react-alert-dialog'; 
-import { DateRange } from 'react-day-picker'; 
+import * as Dialog from '@radix-ui/react-dialog';
+import * as AlertDialog from '@radix-ui/react-alert-dialog'; // Keep for delete confirmation
+import { DateRange } from 'react-day-picker';
+import { Textarea } from '@/components/ui/textarea'; // Import Textarea
 import { ExportButtons } from '@/components/ExportButtons';
 import { formatWinnersForExcel } from '@/lib/export';
-import { getWinners } from '@/lib/mockData'; 
+import { getWinners, sellers, rewards } from '@/lib/mockData'; // Import sellers and rewards
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale'; 
+import { es } from 'date-fns/locale';
 import '../components/responsive-table.css'; // Import responsive table CSS
 
 // Keep local Winner interface definition
@@ -43,6 +46,24 @@ export default function Winners() {
   const [fromDate, setFromDate] = useState<string>('');
   const [toDate, setToDate] = useState<string>('');
   const [appliedDateRange, setAppliedDateRange] = useState<DateRange | undefined>();
+  const [isNewWinnerOpen, setIsNewWinnerOpen] = useState(false); // Control modal visibility
+  const [selectedSellerId, setSelectedSellerId] = useState<string>('');
+  const [selectedRewardName, setSelectedRewardName] = useState<string>(''); // State for selected reward
+  const [winnerComments, setWinnerComments] = useState<string>(''); // State for comments
+  const [winnerPhotoFile, setWinnerPhotoFile] = useState<File | null>(null);
+  const [isEditWinnerOpen, setIsEditWinnerOpen] = useState(false); // State for edit modal
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false); // State for delete confirm
+  const [winnerToModify, setWinnerToModify] = useState<Winner | null>(null); // State for winner being edited/deleted
+  // State for Edit Form
+  const [editSellerId, setEditSellerId] = useState<string>(''); // Add state for seller ID in edit form
+  const [editRewardName, setEditRewardName] = useState<string>('');
+  const [editComments, setEditComments] = useState<string>('');
+  const [editPhotoFile, setEditPhotoFile] = useState<File | null>(null);
+  const [editPhotoPreview, setEditPhotoPreview] = useState<string | null>(null);
+
+
+  const selectedSeller = sellers.find(s => s.id === selectedSellerId);
+  const selectedReward = rewards.find(r => r.name === selectedRewardName);
 
   useEffect(() => {
     const fetchWinners = async () => {
@@ -120,6 +141,84 @@ export default function Winners() {
     }
   };
 
+  // --- Handlers for Edit/Delete ---
+  const handleOpenEdit = (winner: Winner) => {
+    // Find the original seller ID based on name/store (assuming name+store is unique for mock data)
+    const originalSeller = sellers.find(s => s.name === winner.name && s.store === winner.store);
+    setWinnerToModify(winner);
+    // Pre-fill edit form state
+    setEditSellerId(originalSeller?.id || ''); // Set the seller ID
+    setEditRewardName(winner.reward.name);
+    setEditComments(winner.review);
+    setEditPhotoPreview(winner.photo); // Show current photo initially
+    setEditPhotoFile(null); // Clear any previously selected file
+    setIsEditWinnerOpen(true);
+  };
+
+  const handleOpenDeleteConfirm = (winner: Winner) => {
+    setWinnerToModify(winner);
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const handleDeleteWinner = () => {
+    if (!winnerToModify) return;
+    // TODO: Implement actual delete logic (e.g., API call)
+    setWinners(winners.filter(w => w.id !== winnerToModify.id));
+    setIsDeleteConfirmOpen(false);
+    setWinnerToModify(null);
+  };
+
+  const handleEditWinner = () => {
+    if (!winnerToModify || !editSellerId) return; // Ensure seller is selected
+
+    const newSeller = sellers.find(s => s.id === editSellerId);
+    if (!newSeller) {
+      alert("Vendedor seleccionado no válido.");
+      return;
+    }
+
+    const updatedWinner: Winner = {
+      ...winnerToModify,
+      // Update seller details based on editSellerId
+      name: newSeller.name,
+      avatar: newSeller.avatar || '',
+      store: newSeller.store,
+      reward: {
+        ...winnerToModify.reward, // Keep original date unless changed
+        name: editRewardName,
+        // Find points for the selected reward name
+        points: rewards.find(r => r.name === editRewardName)?.points || winnerToModify.reward.points,
+      },
+      review: editComments,
+      // Use new photo if uploaded, otherwise keep the old one
+      photo: editPhotoFile ? URL.createObjectURL(editPhotoFile) : winnerToModify.photo,
+    };
+
+    // TODO: Implement actual update logic (e.g., API call)
+    setWinners(winners.map(w => w.id === updatedWinner.id ? updatedWinner : w));
+
+    setIsEditWinnerOpen(false);
+    setWinnerToModify(null);
+    // Reset edit form state
+    setEditSellerId(''); // Reset seller ID
+    setEditRewardName('');
+    setEditComments('');
+    setEditPhotoFile(null);
+    setEditPhotoPreview(null);
+  };
+
+   const handleEditPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setEditPhotoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditPhotoPreview(reader.result as string); // Update preview with new photo
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   // --- Render ---
   return (
     <div className="space-y-8">
@@ -165,9 +264,10 @@ export default function Winners() {
               formatForExcel={formatWinnersForExcel}
               dateRange={appliedDateRange} // Pass applied range to formatter
             />
-             <Dialog.Root>
+             {/* Add Winner Modal */}
+             <Dialog.Root open={isNewWinnerOpen} onOpenChange={setIsNewWinnerOpen}>
               <Dialog.Trigger asChild>
-                <Button className="flex items-center gap-2">
+                <Button className="flex items-center gap-2" onClick={() => setIsNewWinnerOpen(true)}>
                   <Plus className="h-4 w-4" />
                   Nuevo Ganador
                 </Button>
@@ -176,57 +276,147 @@ export default function Winners() {
                 <Dialog.Overlay className="fixed inset-0 bg-black/50" />
                 <Dialog.Content className="fixed top-[50%] left-[50%] max-h-[85vh] w-[90vw] max-w-[500px] translate-x-[-50%] translate-y-[-50%] rounded-lg bg-white p-6 shadow-lg focus:outline-none">
                   <Dialog.Title className="mb-4 text-xl font-medium">
-                    Nuevo Ganador
+                    Registrar Nuevo Ganador
                   </Dialog.Title>
-                  <Dialog.Description className="text-sm text-gray-500">
-                    Registra los datos del nuevo ganador.
+                  <Dialog.Description className="text-sm text-gray-500 mb-4"> {/* Reduced bottom margin */}
+                    Selecciona el vendedor y sube la foto del premio entregado.
                   </Dialog.Description>
-                  <div className="mt-6 space-y-4">
-                    {/* Form fields... */}
-                    <div className="grid w-full items-center gap-4">
-                      <Label htmlFor="code">Nombre</Label>
-                      <Input id="code" type="text" />
+                  {/* Scrollable Form Area */}
+                  <div className="overflow-y-auto pr-2 max-h-[calc(85vh-200px)]"> {/* Add scroll, padding-right for scrollbar, and max-height calculation */}
+                    {/* Responsive Form Grid */}
+                    <div className="grid grid-cols-1 gap-4">
+                      {/* Seller Selection */}
+                      <div className="space-y-2">
+                        <Label htmlFor="sellerSelect">Vendedor Ganador</Label>
+                      <select
+                        id="sellerSelect"
+                        value={selectedSellerId}
+                        onChange={(e) => setSelectedSellerId(e.target.value)}
+                        className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                      >
+                        <option value="">-- Seleccionar Vendedor --</option>
+                        {sellers.map((seller) => (
+                          <option key={seller.id} value={seller.id}>
+                            {seller.name} ({seller.store})
+                          </option>
+                        ))}
+                      </select>
                     </div>
-                    <div className="grid w-full items-center gap-4">
-                      <Label htmlFor="name">Avatar</Label>
-                      <Input id="name" type="text" />
+
+                    {/* Display Selected Seller Info (Read-only) */}
+                    {selectedSeller && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-md border bg-gray-50 p-4">
+                         <div className="space-y-1">
+                           <Label className="text-xs text-gray-500">Nombre</Label>
+                           <p className="text-sm">{selectedSeller.name}</p>
+                         </div>
+                         <div className="space-y-1">
+                           <Label className="text-xs text-gray-500">Tienda</Label>
+                           <p className="text-sm">{selectedSeller.store}</p>
+                         </div>
+                         {/* Add other relevant fields if needed */}
+                      </div>
+                    )}
+
+                    {/* Reward Selection */}
+                    <div className="space-y-2">
+                      <Label htmlFor="rewardSelect">Premio Reclamado</Label>
+                      <select
+                        id="rewardSelect"
+                        value={selectedRewardName}
+                        onChange={(e) => setSelectedRewardName(e.target.value)}
+                        className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                      >
+                        <option value="">-- Seleccionar Premio --</option>
+                        {rewards.map((reward) => (
+                          <option key={reward.name} value={reward.name}>
+                            {reward.name} ({reward.points} pts)
+                          </option>
+                        ))}
+                      </select>
                     </div>
-                    <div className="grid w-full items-center gap-4">
-                      <Label htmlFor="type">Tienda</Label>
-                      <Input id="type" type="text" />
+
+                    {/* Photo Upload */}
+                    <div className="space-y-2">
+                      <Label htmlFor="winnerPhoto">Foto del Ganador con Premio</Label>
+                      <Input
+                        id="winnerPhoto"
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setWinnerPhotoFile(e.target.files?.[0] || null)}
+                      />
+                       {winnerPhotoFile && (
+                         <p className="text-xs text-gray-500">
+                           Archivo: {winnerPhotoFile.name}
+                         </p>
+                       )}
                     </div>
-                    <div className="grid w-full items-center gap-4">
-                      <Label htmlFor="points">Foto</Label>
-                      <Input id="points" type="text" />
+
+                    {/* Comments */}
+                    <div className="space-y-2">
+                      <Label htmlFor="winnerComments">Comentarios / Reseña</Label>
+                      <Textarea
+                        id="winnerComments"
+                        value={winnerComments}
+                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setWinnerComments(e.target.value)}
+                        placeholder="Añade un comentario o reseña sobre la entrega del premio..."
+                        className="min-h-[80px]"
+                      />
                     </div>
-                    <div className="grid w-full items-center gap-4">
-                      <Label htmlFor="type">Nombre del Premio</Label>
-                      <Input id="type" type="text" />
-                    </div>
-                    <div className="grid w-full items-center gap-4">
-                      <Label htmlFor="points">Puntos</Label>
-                      <Input id="points" type="text" />
-                    </div>
-                    <div className="grid w-full items-center gap-4">
-                      <Label htmlFor="date">Fecha</Label>
-                      <Input id="date" type="date" />
-                    </div>
-                    <div className="grid w-full items-center gap-4">
-                      <Label htmlFor="review">Reseña</Label>
-                      <Input id="review" type="text" />
-                    </div>
-                  </div>
-                  <div className="mt-8 flex w-full items-center justify-end gap-2">
-                    <Dialog.Close asChild>
-                      <Button type="button" variant="secondary">
-                        Cancelar
-                      </Button>
-                    </Dialog.Close>
-                    <Dialog.Close asChild>
-                      <Button type="button"> 
-                        Guardar
-                      </Button>
-                    </Dialog.Close>
+                  </div> {/* End Responsive Form Grid */}
+                </div> {/* End Scrollable Form Area */}
+
+                  {/* Modal Actions - Adjusted margin-top */}
+                  <div className="mt-6 flex flex-col sm:flex-row w-full items-center justify-end gap-2 border-t pt-4"> {/* Add border and padding */}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setIsNewWinnerOpen(false);
+                        setSelectedSellerId('');
+                        setSelectedRewardName('');
+                        setWinnerComments('');
+                        setWinnerPhotoFile(null);
+                      }}
+                      className="w-full sm:w-auto"
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        // TODO: Implement actual save logic (upload photo, create winner object)
+                        if (selectedSeller && selectedReward && winnerPhotoFile) {
+                          console.log("Saving Winner:", selectedSeller.name, selectedReward.name, winnerPhotoFile.name, winnerComments);
+                          // Simulate adding to state (replace with actual logic)
+                           const newWinnerEntry: Winner = {
+                             id: `w-${Date.now()}`, // Temporary ID
+                             name: selectedSeller.name,
+                             avatar: selectedSeller.avatar || '',
+                             store: selectedSeller.store,
+                             photo: URL.createObjectURL(winnerPhotoFile), // Use object URL for preview
+                             reward: {
+                               name: selectedReward.name,
+                               points: selectedReward.points,
+                               date: new Date().toISOString().split('T')[0],
+                             },
+                             review: winnerComments || `¡Felicidades a ${selectedSeller.name}!`, // Use comment or default
+                           };
+                           setWinners(prev => [newWinnerEntry, ...prev]);
+                           setIsNewWinnerOpen(false);
+                           setSelectedSellerId('');
+                           setSelectedRewardName('');
+                           setWinnerComments('');
+                           setWinnerPhotoFile(null);
+                        } else {
+                          alert("Por favor selecciona un vendedor, un premio y sube una foto.");
+                        }
+                      }}
+                      disabled={!selectedSellerId || !selectedRewardName || !winnerPhotoFile} // Update disabled check
+                      className="w-full sm:w-auto"
+                    >
+                      Guardar Ganador
+                    </Button>
                   </div>
                 </Dialog.Content>
               </Dialog.Portal>
@@ -280,11 +470,24 @@ export default function Winners() {
                      </div>
                    </div>
                 </div>
-                 <div className="p-4">
+                 <div className="p-4 space-y-2"> {/* Added space-y-2 */}
                    <p className="text-sm text-gray-600 italic">"{winner.review}"</p>
-                   <p className="text-xs text-gray-400 mt-2 text-right">
-                     {format(new Date(winner.reward.date), 'dd MMM yyyy', { locale: es })}
-                   </p>
+                   <div className="flex justify-between items-center"> {/* Container for date and buttons */}
+                     <p className="text-xs text-gray-400">
+                       {format(new Date(winner.reward.date), 'dd MMM yyyy', { locale: es })}
+                     </p>
+                     {/* Admin Edit/Delete Buttons for Grid */}
+                     {user?.role === 'admin' && (
+                       <div className="flex gap-1">
+                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleOpenEdit(winner)}>
+                           <Edit className="h-4 w-4" />
+                         </Button>
+                         <Button variant="ghost" size="icon" className="h-7 w-7 text-red-600 hover:text-red-700" onClick={() => handleOpenDeleteConfirm(winner)}>
+                           <Trash2 className="h-4 w-4" />
+                         </Button>
+                       </div>
+                     )}
+                   </div>
                  </div>
               </div>
             ))}
@@ -315,15 +518,18 @@ export default function Winners() {
                   <h3 className="text-lg font-medium text-gray-700 mb-2 capitalize">{groupData.display}</h3>
                   <div className="responsive-table overflow-x-auto">
                      <table className="min-w-full">
-                       <thead className="sr-only">
-                         <tr>
-                           <th>Detalles Ganador</th>
-                           <th>Tienda</th>
-                           <th>Premio</th>
-                           <th>Puntos</th>
+                       <thead> {/* Keep thead for structure, hide visually if needed */}
+                         <tr className="border-b">
+                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ganador</th>
+                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tienda</th>
+                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Premio</th>
+                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Puntos</th>
+                           {user?.role === 'admin' && (
+                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                           )}
                          </tr>
                        </thead>
-                       <tbody>
+                       <tbody className="bg-white divide-y divide-gray-200">
                          {/* Map over groupData.winners */}
                          {groupData.winners.map((winner) => ( 
                            <tr key={winner.id} className="border-b last:border-b-0">
@@ -372,6 +578,19 @@ export default function Winners() {
                                  {winner.reward.points} pts
                                </span>
                              </td>
+                             {/* Admin Actions Column for Table */}
+                             {user?.role === 'admin' && (
+                               <td className="px-6 py-4 whitespace-nowrap text-right">
+                                 <div className="flex justify-end gap-1">
+                                   <Button variant="outline" size="sm" className="h-8" onClick={() => handleOpenEdit(winner)}>
+                                     <Edit className="h-4 w-4" />
+                                   </Button>
+                                   <Button variant="outline" size="sm" className="h-8 text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => handleOpenDeleteConfirm(winner)}>
+                                     <Trash2 className="h-4 w-4" />
+                                   </Button>
+                                 </div>
+                               </td>
+                             )}
                            </tr>
                          ))}
                        </tbody>
@@ -383,6 +602,131 @@ export default function Winners() {
            )
         )}
       </div>
+
+      {/* Edit Winner Modal */}
+      <Dialog.Root open={isEditWinnerOpen} onOpenChange={setIsEditWinnerOpen}>
+        <Dialog.Portal>
+           <Dialog.Overlay className="fixed inset-0 bg-black/50" />
+           <Dialog.Content className="fixed top-[50%] left-[50%] max-h-[85vh] w-[90vw] max-w-[500px] translate-x-[-50%] translate-y-[-50%] rounded-lg bg-white p-6 shadow-lg focus:outline-none">
+             <Dialog.Title className="mb-4 text-xl font-medium">
+               Editar Ganador
+             </Dialog.Title>
+             <Dialog.Description className="text-sm text-gray-500 mb-4">
+               Modifica los detalles del premio entregado.
+             </Dialog.Description>
+             {/* Scrollable Edit Form Area */}
+             <div className="overflow-y-auto pr-2 max-h-[calc(85vh-220px)]"> {/* Adjusted max-height */}
+               {winnerToModify && (
+                 <div className="grid grid-cols-1 gap-4">
+                   {/* Edit Seller Selection */}
+                   <div className="space-y-2">
+                     <Label htmlFor="editSellerSelect">Vendedor Ganador</Label>
+                     <select
+                       id="editSellerSelect"
+                       value={editSellerId}
+                       onChange={(e) => setEditSellerId(e.target.value)}
+                       className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                     >
+                       <option value="">-- Seleccionar Vendedor --</option>
+                       {sellers.map((seller) => (
+                         <option key={seller.id} value={seller.id}>
+                           {seller.name} ({seller.store})
+                         </option>
+                       ))}
+                     </select>
+                     </div>
+                   {/* Edit Reward */}
+                   <div className="space-y-2">
+                     <Label htmlFor="editRewardSelect">Premio Reclamado</Label>
+                     <select
+                       id="editRewardSelect"
+                       value={editRewardName}
+                       onChange={(e) => setEditRewardName(e.target.value)}
+                       className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                     >
+                       <option value="">-- Seleccionar Premio --</option>
+                       {rewards.map((reward) => (
+                         <option key={reward.name} value={reward.name}>
+                           {reward.name} ({reward.points} pts)
+                         </option>
+                       ))}
+                     </select>
+                   </div>
+
+                   {/* Edit Photo */}
+                   <div className="space-y-2">
+                     <Label htmlFor="editWinnerPhoto">Cambiar Foto (Opcional)</Label>
+                     {editPhotoPreview && (
+                       <img src={editPhotoPreview} alt="Vista previa" className="mt-2 h-32 w-auto rounded-md object-contain border" />
+                     )}
+                     <Input
+                       id="editWinnerPhoto"
+                       type="file"
+                       accept="image/*"
+                       onChange={handleEditPhotoChange} // Use specific handler
+                     />
+                   </div>
+
+                   {/* Edit Comments */}
+                   <div className="space-y-2">
+                     <Label htmlFor="editWinnerComments">Comentarios / Reseña</Label>
+                     <Textarea
+                       id="editWinnerComments"
+                       value={editComments}
+                       onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditComments(e.target.value)}
+                       placeholder="Añade un comentario o reseña..."
+                       className="min-h-[80px]"
+                     />
+                   </div>
+                 </div>
+               )}
+             </div>
+             {/* Edit Modal Actions */}
+             <div className="mt-6 flex flex-col sm:flex-row w-full items-center justify-end gap-2 border-t pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsEditWinnerOpen(false)}
+                  className="w-full sm:w-auto"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleEditWinner}
+                  disabled={!editSellerId || !editRewardName} // Update validation
+                  className="w-full sm:w-auto"
+                >
+                  Guardar Cambios
+                </Button>
+             </div>
+           </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      {/* Delete Confirmation Modal */}
+      <AlertDialog.Root open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+        <AlertDialog.Portal>
+          <AlertDialog.Overlay className="fixed inset-0 bg-black/50" />
+          <AlertDialog.Content className="fixed top-[50%] left-[50%] max-h-[85vh] w-[90vw] max-w-[450px] translate-x-[-50%] translate-y-[-50%] rounded-lg bg-white p-6 shadow-lg focus:outline-none">
+            <AlertDialog.Title className="mb-2 text-lg font-medium">
+              Confirmar Eliminación
+            </AlertDialog.Title>
+            <AlertDialog.Description className="mb-6 text-sm text-gray-600">
+              ¿Estás seguro de que deseas eliminar el registro del ganador "{winnerToModify?.name}"? Esta acción no se puede deshacer.
+            </AlertDialog.Description>
+            <div className="flex justify-end gap-3">
+              <AlertDialog.Cancel asChild>
+                <Button variant="outline">Cancelar</Button>
+              </AlertDialog.Cancel>
+              <AlertDialog.Action asChild>
+                <Button variant="destructive" onClick={handleDeleteWinner}>Eliminar</Button>
+              </AlertDialog.Action>
+            </div>
+          </AlertDialog.Content>
+        </AlertDialog.Portal>
+      </AlertDialog.Root>
+
     </div>
   );
 }

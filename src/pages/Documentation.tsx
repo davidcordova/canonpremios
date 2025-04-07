@@ -65,7 +65,8 @@ export default function Documentation() {
   const [editDocument, setEditDocument] = useState({
     title: '',
     description: '',
-    category: 'manual' as Document['category']
+    category: 'manual' as Document['category'],
+    file: null as File | null // Add file state for edit modal
   });
 
   const handleNewDocument = () => {
@@ -102,28 +103,41 @@ export default function Documentation() {
       return;
     }
 
-    setDocuments(documents.map(doc => 
+    // Prepare updated document data
+    let updatedDocData: Partial<Document> = {
+      title: editDocument.title,
+      description: editDocument.description,
+      category: editDocument.category,
+      updatedAt: new Date().toISOString().split('T')[0],
+    };
+
+    // If a new file was uploaded, update file-related fields
+    if (editDocument.file) {
+      updatedDocData.type = editDocument.file.name.split('.').pop()?.toLowerCase() as Document['type'];
+      updatedDocData.size = (editDocument.file.size / (1024 * 1024)).toFixed(1) + ' MB';
+      updatedDocData.url = URL.createObjectURL(editDocument.file);
+      // In a real app, you'd upload the file here and get a new URL
+    }
+
+    setDocuments(documents.map(doc =>
       doc.id === selectedDocument.id
-        ? {
-            ...doc,
-            title: editDocument.title,
-            description: editDocument.description,
-            category: editDocument.category,
-            updatedAt: new Date().toISOString().split('T')[0]
-          }
+        ? { ...doc, ...updatedDocData } // Merge existing doc with updated data
         : doc
     ));
 
     setIsEditDocumentOpen(false);
     setSelectedDocument(null);
+    // Reset edit file state
+    setEditDocument(prev => ({ ...prev, file: null }));
   };
 
   const openEditDocument = (document: Document) => {
     setSelectedDocument(document);
-    setEditDocument({
+    setEditDocument({ // Reset edit state including file
       title: document.title,
       description: document.description,
-      category: document.category
+      category: document.category,
+      file: null // Ensure file is null when opening
     });
     setIsEditDocumentOpen(true);
   };
@@ -448,16 +462,26 @@ export default function Documentation() {
                 </select>
               </div>
 
+              {/* File Input for Replacing */}
               <div className="space-y-2">
-                <Label>Archivo Actual</Label>
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <FileText className="h-4 w-4" />
-                  <span>{selectedDocument?.type.toUpperCase()} - {selectedDocument?.size}</span>
-                </div>
-                <p className="text-xs text-gray-500">
-                  Para reemplazar el archivo, sube un nuevo documento.
-                </p>
-              </div>
+                 <Label htmlFor="edit-file">Reemplazar Archivo (Opcional)</Label>
+                 <Input
+                   id="edit-file"
+                   type="file"
+                   accept=".pdf,.doc,.docx,.ppt,.pptx"
+                   onChange={(e) => {
+                     const file = e.target.files?.[0];
+                     setEditDocument({ ...editDocument, file: file || null });
+                   }}
+                 />
+                 {editDocument.file && (
+                   <p className="text-xs text-gray-500">Nuevo archivo: {editDocument.file.name}</p>
+                 )}
+                 {!editDocument.file && selectedDocument && (
+                   <p className="text-xs text-gray-500">Archivo actual: {selectedDocument.type.toUpperCase()} - {selectedDocument.size}</p>
+                 )}
+               </div>
+
 
               <div className="pt-4 border-t flex justify-end gap-2">
                 <Button
