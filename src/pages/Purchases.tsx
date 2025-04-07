@@ -581,12 +581,15 @@ export default function Purchases() {
             <Filter className="mr-2 h-4 w-4" />
             Filtrar
           </Button>
-          <ExportButtons
-            data={dateFilteredPurchases} // Export date-filtered purchases
-            recordsFilename="compras"
-            formatForExcel={formatPurchasesForExcel}
-            dateRange={appliedDateRange} // Pass applied range
-          />
+           {/* Ensure ExportButtons are part of the flex layout */}
+          <div className="md:ml-auto"> {/* Push export buttons to the right on medium+ screens */}
+            <ExportButtons
+              data={dateFilteredPurchases} // Export date-filtered purchases
+              recordsFilename="compras"
+              formatForExcel={formatPurchasesForExcel}
+              dateRange={appliedDateRange} // Pass applied range
+            />
+          </div>
         </div>
       </div>
 

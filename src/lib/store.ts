@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
 interface User {
   id: string;
@@ -19,10 +20,12 @@ interface AuthState {
   updateUserAvatar: (avatarUrl: string) => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  isAuthenticated: false,
-  login: async (email: string, password: string) => {
+export const useAuthStore = create(
+  persist<AuthState>(
+    (set) => ({
+      user: null,
+      isAuthenticated: false,
+      login: async (email: string, password: string) => {
     // Lógica de inicio de sesión simulada
     if (email === 'vendedor@canon.com' && password === 'vendedor123') {
       const user: User = {
@@ -63,6 +66,13 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
   logout: () => set({ user: null, isAuthenticated: false }),
   updateUserAvatar: (avatarUrl: string) => set(state => ({
-    user: state.user ? { ...state.user, avatar: avatarUrl } : null
-  }))
-}));
+    user: state.user ? { ...state.user, avatar: avatarUrl } : null,
+  })),
+}), // Close the state definition function here
+{ // Persist options object starts here
+  name: 'auth-storage', // Unique name for the localStorage key
+  storage: createJSONStorage(() => localStorage), // Use localStorage
+  // Remove partialize to persist the entire state
+}
+) // Close persist()
+); // Close create()
