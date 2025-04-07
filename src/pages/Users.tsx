@@ -3,7 +3,7 @@ import { useAuthStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus, Search, UserPlus, Mail, Building2, Phone, MapPin, Star, Edit, Trash2, AlertCircle, Camera, Upload, Calendar, Key } from 'lucide-react';
+import { Plus, Search, UserPlus, Mail, Building2, Phone, MapPin, Star, Edit, Trash2, AlertCircle, Camera, Upload, Calendar, Key, LayoutGrid, List } from 'lucide-react'; // Add LayoutGrid and List icons
 import * as Dialog from '@radix-ui/react-dialog';
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
 import { companies } from '@/lib/mockData';
@@ -126,6 +126,7 @@ export default function Users() {
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [viewMode, setViewMode] = useState<'cards' | 'list'>('cards'); // State for view mode
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -393,11 +394,34 @@ export default function Users() {
             className="pl-9"
           />
         </div>
+        {/* View Mode Toggle Buttons */}
+        <div className="flex gap-2">
+          <Button
+            variant={viewMode === 'cards' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('cards')}
+            className="flex items-center gap-2"
+          >
+            <LayoutGrid className="h-4 w-4" />
+            Tarjetas
+          </Button>
+          <Button
+            variant={viewMode === 'list' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('list')}
+            className="flex items-center gap-2"
+          >
+            <List className="h-4 w-4" />
+            Lista
+          </Button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-        {filteredUsers.map((user) => (
-          <div key={user.id} className="bg-white rounded-lg shadow-sm overflow-hidden">
+      {/* Conditional Rendering based on viewMode */}
+      {viewMode === 'cards' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+          {filteredUsers.map((user) => (
+            <div key={user.id} className="bg-white rounded-lg shadow-sm overflow-hidden">
             <div className="p-6">
               <div className="flex items-center gap-4 mb-4">
                 <div className="relative">
@@ -505,40 +529,60 @@ export default function Users() {
               </div>
             </div>
           </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
-      {/* Tabla para vista movil */}
-      <div className="overflow-x-auto w-full mt-6">
-        <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400 border-separate border-spacing-0">
-          <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+      {viewMode === 'list' && (
+        <div className="overflow-x-auto w-full mt-6 bg-white rounded-lg shadow-sm">
+          <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+            <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
             <tr>
               <th scope="col" className="px-6 py-3">Nombre</th>
               <th scope="col" className="px-6 py-3">Email</th>
               <th scope="col" className="px-6 py-3">Empresa</th>
-              <th scope="col" className="px-6 py-3">Acciones</th>
+              <th scope="col" className="px-6 py-3">Rol</th>
+              <th scope="col" className="px-6 py-3">Estado</th>
+              <th scope="col" className="px-6 py-3 text-right">Acciones</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y">
             {filteredUsers.map(user => (
               <tr key={user.id} className="bg-white dark:bg-gray-800">
-                <td data-label="Nombre" className="px-6 py-4 whitespace-nowrap">{user.name}</td>
+                <td data-label="Nombre" className="px-6 py-4 whitespace-nowrap font-medium text-gray-900 dark:text-white">{user.name}</td>
                 <td data-label="Email" className="px-6 py-4 whitespace-nowrap">{user.email}</td>
                 <td data-label="Empresa" className="px-6 py-4 whitespace-nowrap">{user.company}</td>
-                <td data-label="Acciones" className="px-6 py-4 whitespace-nowrap">
-                  <Button variant="outline" size="sm" className="mr-2" onClick={() => openEditUser(user)}><Edit className="h-4 w-4" /></Button>
-                  <Button
-                    variant="outline"
+                <td data-label="Rol" className="px-6 py-4 whitespace-nowrap">
+                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      user.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
+                    }`}>
+                      {user.role === 'admin' ? 'Admin' : 'Vendedor'}
+                    </span>
+                </td>
+                 <td data-label="Estado" className="px-6 py-4 whitespace-nowrap">
+                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      user.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    }`}>
+                      {user.status === 'active' ? 'Activo' : 'Inactivo'}
+                    </span>
+                 </td>
+                <td data-label="Acciones" className="px-6 py-4 whitespace-nowrap text-right">
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" size="sm" onClick={() => openEditUser(user)}><Edit className="h-4 w-4" /></Button>
+                    <Button
+                      variant="outline"
                     size="sm"
                     className="flex items-center gap-2 text-red-600 hover:text-red-700"
-                    onClick={() => confirmDelete(user)}><Trash2 className="h-4 w-4" />
-                  </Button>
+                      onClick={() => confirmDelete(user)}><Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      )}
 
       {/* Modal para nuevo usuario */}
       <Dialog.Root open={isNewUserOpen} onOpenChange={setIsNewUserOpen}>

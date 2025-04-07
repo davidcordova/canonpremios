@@ -124,9 +124,9 @@ export default function Layout() {
                 )}
               </button>
               <img
-                src="https://www.canon.es/media/Canon_logo_500_tcm86-1117891.jpg"
+                src="https://graffica.info/wp-content/uploads/2016/07/logo_01.jpg" // New logo URL
                 alt="Canon Logo"
-                className="h-8"
+                className="h-8" // Keep existing height constraint
               />
             </div>
             <div className="flex items-center gap-4">

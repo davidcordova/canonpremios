@@ -20,6 +20,7 @@ interface Reward {
   stock: number;
   image: string;
   category: 'tecnología' | 'vales' | 'merchandising';
+  eligibleCategory?: 'bronce' | 'plata' | 'oro' | 'diamante'; // Add eligible category
 }
 
 interface RewardRequest {
@@ -44,7 +45,8 @@ const mockRewards: Reward[] = [
     points: 5000,
     stock: 5,
     image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&q=80&w=1200&h=800',
-    category: 'tecnología'
+    category: 'tecnología',
+    eligibleCategory: 'oro' // Added eligible category
   },
   {
     id: '2',
@@ -53,7 +55,8 @@ const mockRewards: Reward[] = [
     points: 2000,
     stock: 10,
     image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&q=80&w=1200&h=800',
-    category: 'vales'
+    category: 'vales',
+    eligibleCategory: 'bronce' // Added eligible category
   },
   {
     id: '3',
@@ -62,7 +65,8 @@ const mockRewards: Reward[] = [
     points: 3500,
     stock: 8,
     image: 'https://images.unsplash.com/photo-1579586337278-3befd40fd17a?auto=format&fit=crop&q=80&w=1200&h=800',
-    category: 'tecnología'
+    category: 'tecnología',
+    eligibleCategory: 'plata' // Added eligible category
   },
   {
     id: '4',
@@ -71,7 +75,8 @@ const mockRewards: Reward[] = [
     points: 1500,
     stock: 15,
     image: 'https://images.unsplash.com/photo-1541532713592-79a0317b6b77?auto=format&fit=crop&q=80&w=1200&h=800',
-    category: 'merchandising'
+    category: 'merchandising',
+    eligibleCategory: 'bronce' // Added eligible category
   }
 ];
 
@@ -114,6 +119,16 @@ const categoryNames = {
   merchandising: 'Merchandising'
 };
 
+// Define seller category names and order for the dropdown
+const sellerCategoryNames: Record<NonNullable<Reward['eligibleCategory']>, string> = {
+  bronce: 'Bronce',
+  plata: 'Plata',
+  oro: 'Oro',
+  diamante: 'Diamante'
+};
+const sellerCategoryOrder: Array<NonNullable<Reward['eligibleCategory']>> = ['bronce', 'plata', 'oro', 'diamante'];
+
+
 export default function Rewards() {
   const user = useAuthStore((state) => state.user);
   const [rewards, setRewards] = useState<Reward[]>(mockRewards);
@@ -138,7 +153,8 @@ export default function Rewards() {
     points: '',
     stock: '',
     image: '',
-    category: 'tecnología' as 'tecnología' | 'vales' | 'merchandising'
+    category: 'tecnología' as 'tecnología' | 'vales' | 'merchandising',
+    eligibleCategory: 'bronce' as NonNullable<Reward['eligibleCategory']> // Add state for eligible category
   });
 
   const handleRequestReward = (reward: Reward) => {
@@ -188,6 +204,12 @@ export default function Rewards() {
       return;
     }
 
+    // Ensure eligibleCategory is included
+    if (!newReward.name || !newReward.description || !newReward.points || !newReward.stock || !newReward.image || !newReward.eligibleCategory) {
+      alert("Por favor completa todos los campos, incluyendo la categoría mínima.");
+      return;
+    }
+
     const reward: Reward = {
       id: (rewards.length + 1).toString(),
       name: newReward.name,
@@ -195,7 +217,8 @@ export default function Rewards() {
       points: parseInt(newReward.points),
       stock: parseInt(newReward.stock),
       image: newReward.image,
-      category: newReward.category
+      category: newReward.category,
+      eligibleCategory: newReward.eligibleCategory // Include eligible category
     };
 
     setRewards([...rewards, reward]);
@@ -206,16 +229,19 @@ export default function Rewards() {
       points: '',
       stock: '',
       image: '',
-      category: 'tecnología'
+      category: 'tecnología',
+      eligibleCategory: 'bronce' // Reset eligible category
     });
   };
 
   const handleEditReward = () => {
-    if (!selectedReward || !newReward.name || !newReward.description || !newReward.points || !newReward.stock || !newReward.image) {
+    // Ensure eligibleCategory is included in validation
+    if (!selectedReward || !newReward.name || !newReward.description || !newReward.points || !newReward.stock || !newReward.image || !newReward.eligibleCategory) {
+       alert("Por favor completa todos los campos, incluyendo la categoría mínima.");
       return;
     }
 
-    setRewards(rewards.map(reward => 
+    setRewards(rewards.map(reward =>
       reward.id === selectedReward.id
         ? {
             ...reward,
@@ -224,7 +250,8 @@ export default function Rewards() {
             points: parseInt(newReward.points),
             stock: parseInt(newReward.stock),
             image: newReward.image,
-            category: newReward.category
+            category: newReward.category,
+            eligibleCategory: newReward.eligibleCategory // Include eligible category
           }
         : reward
     ));
@@ -263,7 +290,8 @@ export default function Rewards() {
       points: reward.points.toString(),
       stock: reward.stock.toString(),
       image: reward.image,
-      category: reward.category
+      category: reward.category,
+      eligibleCategory: reward.eligibleCategory || 'bronce' // Pre-fill eligible category or default
     });
     setIsEditRewardOpen(true);
   };
@@ -816,6 +844,21 @@ export default function Rewards() {
                 </select>
               </div>
 
+              {/* Add Eligible Category Dropdown */}
+              <div className="space-y-2">
+                <Label htmlFor="eligibleCategory">Categoría Mínima Vendedor</Label>
+                <select
+                  id="eligibleCategory"
+                  value={newReward.eligibleCategory}
+                  onChange={(e) => setNewReward({ ...newReward, eligibleCategory: e.target.value as NonNullable<Reward['eligibleCategory']> })}
+                  className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring w-full"
+                >
+                  {sellerCategoryOrder.map((catKey) => (
+                    <option key={catKey} value={catKey}>{sellerCategoryNames[catKey]}</option>
+                  ))}
+                </select>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="image">URL de la Imagen</Label>
                 <Input className="w-full"
@@ -838,7 +881,7 @@ export default function Rewards() {
                 </Button>
                 <Button
                   onClick={handleAddReward}
-                  disabled={!newReward.name || !newReward.description || !newReward.points || !newReward.stock || !newReward.image}
+                  disabled={!newReward.name || !newReward.description || !newReward.points || !newReward.stock || !newReward.image || !newReward.eligibleCategory} // Update disabled check
                 >
                   Crear Premio
                 </Button>
@@ -914,6 +957,21 @@ export default function Rewards() {
                 </select>
               </div>
 
+              {/* Add Eligible Category Dropdown */}
+               <div className="space-y-2">
+                 <Label htmlFor="edit-eligibleCategory">Categoría Mínima Vendedor</Label>
+                 <select
+                   id="edit-eligibleCategory"
+                   value={newReward.eligibleCategory} // Use the same state as the add modal
+                   onChange={(e) => setNewReward({ ...newReward, eligibleCategory: e.target.value as NonNullable<Reward['eligibleCategory']> })}
+                   className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring w-full"
+                 >
+                   {sellerCategoryOrder.map((catKey) => (
+                     <option key={catKey} value={catKey}>{sellerCategoryNames[catKey]}</option>
+                   ))}
+                 </select>
+               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="edit-image">URL de la Imagen</Label>
                 <Input className="w-full"
@@ -932,7 +990,7 @@ export default function Rewards() {
                 </Button>
                 <Button
                   onClick={handleEditReward}
-                  disabled={!newReward.name || !newReward.description || !newReward.points || !newReward.stock || !newReward.image}
+                  disabled={!newReward.name || !newReward.description || !newReward.points || !newReward.stock || !newReward.image || !newReward.eligibleCategory} // Update disabled check
                 >
                   Guardar Cambios
                 </Button>

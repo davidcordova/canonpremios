@@ -72,9 +72,9 @@ export default function Login() {
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
         <div className="flex justify-center mb-8">
           <img
-            src="https://www.canon.es/media/Canon_logo_500_tcm86-1117891.jpg"
+            src="https://graffica.info/wp-content/uploads/2016/07/logo_01.jpg" // New logo URL
             alt="Canon Logo"
-            className="h-12"
+            className="h-12" // Keep existing height
           />
         </div>
         
